@@ -57,5 +57,5 @@ dist/
 .dmypy.json
 .pyre/
 
-# Ignore everything under src/data/files
-src/data/files/
+# anything in files folder
+files/
