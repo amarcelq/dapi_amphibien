@@ -126,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Sessions
 # https://docs.djangoproject.com/en/5.2/ref/settings/#sessions
-SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 # Redis
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
