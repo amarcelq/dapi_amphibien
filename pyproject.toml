@@ -1,5 +1,5 @@
 [project]
-name = "hello"
+name = "frogs"
 version = "0.1.0"
 description = "An example Django app running in Docker."
 readme = "README.md"

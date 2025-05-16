@@ -1,5 +1,5 @@
 """
-WSGI config for hello project.
+WSGI config for frogs project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
