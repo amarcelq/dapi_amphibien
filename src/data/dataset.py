@@ -6,9 +6,11 @@ from torch.utils.data import DataLoader
 import noisereduce as nr
 import soundfile as sf
 import numpy as np
+import matplotlib.pyplot as plt
 from typing import Optional, List, Tuple
+import cv2
 
-OUTPUT_DIR = Path("src") / "data" / "denoised"
+OUTPUT_DIR = Path("src") / "data" / "files" / "denoised"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 class FrogDataset(Dataset):
@@ -47,9 +49,57 @@ def denoise(X: List[Tuple[np.ndarray, int, str]], save_path: Optional[Path] = No
 
     return X_denoised
 
+def sound_to_image(x: np.ndarray, save_folder_path: Path, save_file_name: str | Path, show: bool = False, model_optimized: bool = False, dpi: int = 200):
+    # Compute the spectrogram with Short-time Fourier Transform
+    db_measures = librosa.amplitude_to_db(np.abs(librosa.stft(x)), ref=np.max)
+    # normalize the picture to range [0-255]
+    img = (255 * (db_measures - db_measures.min()) / (db_measures.max() - db_measures.min())).astype(np.uint8)
+    # colorize the specogramm
+    #img = cv2.applyColorMap(img, cv2.COLORMAP_MAGMA)
+    # resize all pictures to 224x224 since infamouse models like resnet use this as input
+    img = cv2.resize(img, (224, 224), interpolation=cv2.INTER_LINEAR)
+
+    save_folder_path.mkdir(parents=True, exist_ok=True)
+    save_path = save_folder_path / (str(save_file_name))
+    # no addtional visual elements
+    if model_optimized:
+        cv2.imwrite(str(save_path) + ".png", img)
+        if show:
+            cv2.imshow("Spectrogram", img)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+    else:
+        plt.figure(figsize=(224 / dpi, 224 / dpi), frameon=False)
+        plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        plt.colorbar(format='%+2.0f dB')
+        plt.title('Spectrogram')
+        plt.xlabel('Time')
+        plt.ylabel('Frequency')
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=dpi, bbox_inches="tight", pad_inches=0)
+        img = load_image(save_path)
+        if show:
+            plt.show()
+        plt.close()
+    
+    return img
+
+def load_image(path: str | Path, output_size: Optional[Tuple[int, int]] = None):
+    img = cv2.imread(str(path))
+    if output_size:
+        # bilinear interpolation
+        img = cv2.resize(img, output_size, interpolation=cv2.INTER_LINEAR)
+
+    return img
+
 if __name__ == "__main__":
     dataset = FrogDataset("/media/marcel/3831-6261/")
     batch_size = 64
-    dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda b: denoise(b, save_path=OUTPUT_DIR))
+    dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=denoise)
     for X_batch in dataloader:
-        print(X_batch)
+        for x, sr, p in X_batch:
+            img_path = OUTPUT_DIR / "spectogramms" / (Path(p).stem + ".png")
+            img = sound_to_image(x, 
+                           save_folder_path=OUTPUT_DIR / "spectogramms",
+                           save_file_name=Path(p).stem,
+                           model_optimized=True)

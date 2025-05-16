@@ -1,0 +1,61 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.so
+
+# Jupyter
+.ipynb_checkpoints
+
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+*.env
+
+# VSCode
+.vscode/
+
+# macOS
+.DS_Store
+
+# PyCharm
+.idea/
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
+ehthumbs.db
+Icon?
+
+# Compiled
+*.o
+*.obj
+*.dll
+*.exe
+*.out
+*.class
+
+# Test / Coverage
+.coverage
+.cache
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# MyPy / Pylint
+.mypy_cache/
+.dmypy.json
+.pyre/
+
+# Ignore everything under src/data/files
+src/data/files/
