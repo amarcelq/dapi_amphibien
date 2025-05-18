@@ -4,4 +4,5 @@ from pages import views
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("wav", views.upload_wav, name="upload_wav")
 ]

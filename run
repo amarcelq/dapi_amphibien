@@ -168,16 +168,20 @@ yarn:build:js() {
 
 yarn:build:css() {
   # Build CSS assets, this is meant to be run from within the assets container
-  local args=()
+  # local args=()
 
-  if [ "${NODE_ENV:-}" == "production" ]; then
-    args=(--minify)
-  else
-    args=(--watch)
-  fi
+  # if [ "${NODE_ENV:-}" == "production" ]; then
+  #   args=(--minify)
+  # else
+  #   args=(--watch)
+  # fi
 
+  # mkdir -p ../public/css
+  # DEBUG=0 tailwindcss -i css/app.css -o ../public/css/app.css "${args[@]}"
+  
+  # Build CSS assets using esbuild, replacing tailwind
   mkdir -p ../public/css
-  DEBUG=0 tailwindcss -i css/app.css -o ../public/css/app.css "${args[@]}"
+  node esbuild.css.config.mjs
 }
 
 clean() {
@@ -188,39 +192,6 @@ clean() {
     .ruff_cache/ .pytest_cache/ .coverage celerybeat-schedule
 
   touch public/.keep public_collected/.keep
-}
-
-ci:install-deps() {
-  # Install Continuous Integration (CI) dependencies
-  sudo apt-get install -y curl
-  sudo curl \
-    -L https://raw.githubusercontent.com/nickjj/wait-until/v0.2.0/wait-until \
-    -o /usr/local/bin/wait-until && sudo chmod +x /usr/local/bin/wait-until
-}
-
-ci:test() {
-  # Execute Continuous Integration (CI) pipeline
-  lint:dockerfile "${@}"
-  lint:shell
-  format:shell --diff
-
-  cp --no-clobber .env.example .env
-
-  docker compose build
-  docker compose up -d
-
-  # shellcheck disable=SC1091
-  . .env
-  wait-until "docker compose exec -T \
-    -e PGPASSWORD=${POSTGRES_PASSWORD} postgres \
-    psql -U ${POSTGRES_USER} ${POSTGRES_USER} -c 'SELECT 1'"
-
-  docker compose logs
-
-  lint "${@}"
-  format --check --diff
-  manage migrate
-  manage test
 }
 
 help() {

@@ -1,1 +1,246 @@
-@import "tailwindcss" source("/app");
+:root {
+  --color-yellow: #fab005;
+  --color-green: #2f9e44;
+  --color-black: #1e1e1e;
+  --radius-border: 0.2em;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Nunito', sans-serif;
+  font-size: max(15px, 0.8vw);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  background: none;
+  color: inherit;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
+  width: auto;
+  height: auto;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* body */
+body {
+  max-width: 100%;
+  min-height: 100vh;
+  background-color: var(--color-black);
+}
+
+/* nav bar */
+#navigation-bar {
+  background-color: var(--color-black);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: baseline;
+  gap: 1em;
+  padding: 0em 1em;
+  width: 100%;
+  height: 3.4em;
+}
+
+#navigation-bar .title a {
+  color: var(--color-green);
+  font-weight: bold;
+  font-size: 2em;
+}
+#navigation-bar .how-to {
+  margin-top: auto;
+  padding-bottom: 1em;
+}
+
+#navigation-bar .how-to a {
+  color: var(--color-green);
+  font-weight: bolder;
+  font-size: 1em;
+}
+
+#navigation-bar .symbol {
+  margin-left: auto;
+}
+
+#navigation-bar .symbol a {
+  height: 1.9rem;
+  width: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#navigation-bar .symbol svg {
+  /* use rem, as em wont scale svgs when site is zoomed */
+  height: 1.9rem;
+  width: auto;
+}
+
+#navigation-bar .symbol svg * {
+  stroke: var(--color-green);
+}
+
+/* yellow */
+#yellow {
+  background-color: var(--color-yellow);
+  min-height: calc(100vh - 3.4em);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: baseline;
+}
+
+#yellow .title {
+  margin-top: 3em;
+  font-size: 5em;
+  font-weight: bold;
+  color: var(--color-green);
+  text-align: center;
+  max-width: 7em;
+}
+
+#yellow .subtitle {
+  margin: 0.5em 0em;
+  font-size: 1.5em;
+  font-weight: bolder;
+  color: var(--color-green);
+}
+
+#yellow .drop-input {
+  margin-top: 0.5em;
+  width: 20em;
+  height: 5em;
+  background-color: var(--color-green);
+  border-radius: 1em;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+#yellow .drop-input.dragover {
+  background-color: var(--color-black);
+}
+
+#yellow .drop-input .mic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#yellow .drop-input .mic svg {
+  margin: 0em 1em;
+  width: 3rem;
+  height: auto;
+}
+
+#yellow .drop-input .mic svg * {
+  stroke: var(--color-black);
+}
+
+#yellow .drop-input.dragover .mic svg * {
+  stroke: var(--color-green) !important; 
+}
+
+#yellow .drop-input .wave {
+  margin-right: 1em;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#yellow .drop-input .wave svg {
+  width: 100%;
+  height: 4rem;
+}
+
+#yellow .drop-input .wave svg * {
+  stroke: var(--color-black);
+}
+
+#yellow .drop-input.dragover .wave svg * {
+  stroke: var(--color-green);
+}
+
+#yellow .how {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#yellow .how .text {
+  color: var(--color-green);
+  font-weight: bolder;
+}
+
+#yellow .how .arrow svg {
+  width: 1.5rem;
+  height: auto;
+}
+
+#yellow .how .arrow svg * {
+  stroke: var(--color-green);
+}
+
+/* green */
+#green {
+  /* padding-top: 2em; */
+  background-color: var(--color-green);
+  min-height: 100vh;
+}
+
+#green .seg {
+  display: flex;
+  flex-direction: row;
+}
+
+#green .seg .text {
+  width: 70%;
+  height: 10em;
+  padding: 1em;
+  display: flex;
+  align-items: center;
+  justify-content: baseline;
+}
+
+#green .seg .pic {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#green .seg .pic svg {
+  width: 5rem;
+  height: auto;
+}
+
+#green .seg .pic svg * {
+  stroke: var(--color-black);
+}
+
+/* footer */
+#footer-bar {
+  background-color: var(--color-black);
+  height: 5em;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  color: var(--color-green);
+  font-size: 1.2em;
+  font-weight: bolder;
+}

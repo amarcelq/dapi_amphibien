@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "svg" # inline svgs
 ]
 
 MIDDLEWARE = [
@@ -159,6 +160,10 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = ["/public", os.path.join(BASE_DIR, "..", "public")]
 STATIC_ROOT = "/public_collected"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# Media files (User uplaoded content)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = "/media"
 
 # Django Debug Toolbar
 # https://django-debug-toolbar.readthedocs.io/

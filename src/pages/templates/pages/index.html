@@ -1,0 +1,106 @@
+{% load static %}
+{% load svg %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>What Quaks?</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A web based analyitcs tool to discover unique sounds in a wildlife recording.">
+    <style>
+        @font-face {
+            font-family: 'Nunito';
+            font-style: NORMAL;
+            font-weight: 300;
+            font-display: swap;
+            src: url({% static 'fonts/Nunito/Nunito-VariableFont_wght.ttf' %}) format('ttf');
+        }
+    </style>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <script defer src="{% static 'js/app.js' %}"></script>
+
+    {# Generated with: https://realfavicongenerator.net/ #}
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'site.webmanifest' %}">
+    <link rel="mask-icon" href="{% static 'safari-pinned-tab.svg' %}" color="#61b9d2">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+  </head>
+
+  <body>
+    <nav id="navigation-bar">
+        <div class="title">
+            <a href="#">Frogs</a>
+        </div>
+        <div class="how-to">
+            <a href="#green">How it works</a>
+        </div>
+        {% comment %} TODO: based on login status redirect {% endcomment %}
+        <div class="symbol">
+            <a href="">
+                {% svg 'profile-circle' %}
+            </a>
+        </div>
+    </nav>
+    <main id="main-content">
+        {% comment %} the main section {% endcomment %}
+        <div id="yellow">
+            <div class="title">Discover what quacks</div>
+            <div class="subtitle">Just drag n' drop your audio file here</div>
+            <div class="drop-input" id="drop-input">
+                {% csrf_token %}
+                <div class="mic">
+                    {% svg 'microphone-speaking' %}
+                </div>
+                <div class="wave">
+                    {% svg 'sine-wave' %}
+                </div>
+            </div>
+            <div class="how">
+                <div class="text">how it works</div>
+                <div class="arrow">
+                    {% svg 'fast-arrow-down' %}
+                </div>
+            </div>
+        </div>
+        {% comment %} The how to sectin {% endcomment %}
+        <div id="green">
+            <div class="seg">
+                <div class="text">
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Nam esse officia, harum eum dolores libero distinctio error nobis architecto dignissimos ducimus! Aliquid corrupti est aspernatur corporis iure necessitatibus quis delectus!
+                </div>
+                <div class="pic">
+                    {% svg 'microphone-speaking' %}
+                </div>
+            </div>
+            <div class="seg">
+                <div class="pic">
+                    {% svg 'sine-wave' %}
+                </div>
+                <div class="text">
+                    Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ipsa optio soluta laboriosam eius maiores doloremque, atque, quisquam porro tempore minima animi nemo explicabo sed repudiandae earum totam ea similique tenetur.
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer id="footer-bar">
+        <a href="#impressum">Impressum</a>
+        <a href="#datenschutz">Datenschutz</a>
+    </footer>
+    {% comment %} <footer class="text-center mt-6 pb-6 h-10">
+      <p class="text-gray-500">
+        <a class="border-b mb-1" href="https://github.com/nickjj/docker-django-example">Coded</a>
+        with
+        <svg class="h-5 w-5 text-red-600 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+        </svg>
+        by
+        <a class="border-b mb-1" href="https://nickjanetakis.com">Nick Janetakis</a>
+      </p>
+    </footer> {% endcomment %}
+  </body>
+</html>

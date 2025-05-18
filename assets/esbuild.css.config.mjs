@@ -1,5 +1,5 @@
 import * as esbuild from 'esbuild'
-import copyStaticFiles from 'esbuild-copy-static-files'
+import path from 'path'
 
 let minify = false
 let sourcemap = true
@@ -12,17 +12,16 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const config = {
-  entryPoints: ['./js/app.js'],
-  outfile: '../public/js/app.js',
+  entryPoints: ['./css/app.css'],
+  outfile: path.resolve('../public/css/app.css'),
   bundle: true,
+  loader: { '.css': 'css'},
   minify: minify,
   sourcemap: sourcemap,
-  plugins: [copyStaticFiles()],
-  inject: ["js/inject-jquery.js"],
 }
 
 if (watch) {
-  let context = await esbuild.context({...config, logLevel: 'info'})
+  let context = await esbuild.context({ ...config, logLevel: 'info' })
   await context.watch()
 } else {
   esbuild.build(config)

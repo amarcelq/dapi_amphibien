@@ -137,16 +137,13 @@ wheels = [
 ]
 
 [[package]]
-name = "gunicorn"
-version = "23.0.0"
+name = "django-inline-svg"
+version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "packaging" },
+    { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/34/72/9614c465dc206155d93eff0ca20d42e1e35afc533971379482de953521a4/gunicorn-23.0.0.tar.gz", hash = "sha256:f014447a0101dc57e294f6c18ca6b40227a4c90e9bdb586042628030cba004ec", size = 375031 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/cb/7d/6dac2a6e1eba33ee43f318edbed4ff29151a49b5d37f080aad1e6469bca4/gunicorn-23.0.0-py3-none-any.whl", hash = "sha256:ec400d38950de4dfd418cff8328b2c8faed0edb0d517d3394e457c317908ca4d", size = 85029 },
-]
+sdist = { url = "https://files.pythonhosted.org/packages/a1/46/6bf3b74ce8a47e6cc413f4f5cbb08af2eb831387c2136b3b750c8c24bb0e/django-inline-svg-0.1.1.tar.gz", hash = "sha256:9a908eb7f2ed23317f896be6e0c355ec488b1944e6f4d2d829a74d1d4e5fb918", size = 3440 }
 
 [[package]]
 name = "frogs"
@@ -156,6 +153,7 @@ dependencies = [
     { name = "celery" },
     { name = "django" },
     { name = "django-debug-toolbar" },
+    { name = "django-inline-svg" },
     { name = "gunicorn" },
     { name = "psycopg" },
     { name = "redis" },
@@ -169,12 +167,25 @@ requires-dist = [
     { name = "celery", specifier = "==5.5.2" },
     { name = "django", specifier = "==5.2.1" },
     { name = "django-debug-toolbar", specifier = "==5.2.0" },
+    { name = "django-inline-svg", specifier = ">=0.1.1" },
     { name = "gunicorn", specifier = "==23.0.0" },
     { name = "psycopg", specifier = "==3.2.7" },
     { name = "redis", specifier = "==6.0.0" },
     { name = "ruff", specifier = "==0.11.8" },
     { name = "setuptools", specifier = "==80.3.1" },
     { name = "whitenoise", specifier = "==6.9.0" },
+]
+
+[[package]]
+name = "gunicorn"
+version = "23.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/34/72/9614c465dc206155d93eff0ca20d42e1e35afc533971379482de953521a4/gunicorn-23.0.0.tar.gz", hash = "sha256:f014447a0101dc57e294f6c18ca6b40227a4c90e9bdb586042628030cba004ec", size = 375031 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cb/7d/6dac2a6e1eba33ee43f318edbed4ff29151a49b5d37f080aad1e6469bca4/gunicorn-23.0.0-py3-none-any.whl", hash = "sha256:ec400d38950de4dfd418cff8328b2c8faed0edb0d517d3394e457c317908ca4d", size = 85029 },
 ]
 
 [[package]]
