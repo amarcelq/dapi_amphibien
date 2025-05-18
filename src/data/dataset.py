@@ -13,7 +13,7 @@ import cv2
 OUTPUT_DIR = Path("src") / "data" / "files" / "denoised"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-class FrogDataset(Dataset):
+class AmphibDataset(Dataset):
     def __init__(self, parent_path: str):
         all_paths = list(Path(parent_path).rglob("*.WAV"))
         if len(all_paths) == 0:
@@ -93,7 +93,8 @@ def load_image(path: str | Path, output_size: Optional[Tuple[int, int]] = None):
     return img
 
 if __name__ == "__main__":
-    dataset = FrogDataset("/media/marcel/3831-6261/")
+    path = "/media/marcel/3831-6261/"
+    dataset = AmphibDataset(path)
     batch_size = 64
     dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=denoise)
     for X_batch in dataloader:
