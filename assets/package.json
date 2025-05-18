@@ -4,6 +4,8 @@
   "dependencies": {
     "esbuild": "0.25.4",
     "esbuild-copy-static-files": "0.1.0",
-    "jquery": "^3.7.1"
+    "howler": "^2.2.4",
+    "jquery": "^3.7.1",
+    "wavesurfer.js": "^7.9.5"
   }
 }

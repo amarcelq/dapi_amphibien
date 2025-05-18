@@ -1,4 +1,5 @@
 import $ from 'jquery'
+import { show_big_waveform } from './audio'
 
 const fadeTime = 150
 
@@ -31,6 +32,9 @@ function dummy_progress () {
     $('#yellow .process, #yellow .progress-bar, #yellow .process-info').hide()
     // show audio stuff (at this point dummy)
     $('#yellow .file-bar, #yellow .text, #yellow .tiles').fadeIn(fadeTime)
+    show_big_waveform(
+      '/media/sessions/p8j9rvbb3b135e4cgr2hfd46bnufs7uq/upload.wav'
+    )
   }
 }
 
@@ -102,15 +106,35 @@ $(_ => {
       }
     })
   })
-    updateProgressBar(0)
-    
-    $(".tile .main .more button").on("click", e => {
-        const $tile = $(e.currentTarget).closest(".tile");
-        if ($tile.hasClass("open")) {
-            $tile.removeClass("open");
-        } else {
-            $(".tile").removeClass("open");
-            $tile.addClass("open");
-        }
-    })
+  updateProgressBar(0)
+
+  $('.tile .main .more button').on('click', e => {
+    const $tile = $(e.currentTarget).closest('.tile')
+    if ($tile.hasClass('open')) {
+      $tile.removeClass('open')
+    } else {
+      $('.tile').removeClass('open')
+      $tile.addClass('open')
+    }
+  })
+
+  $('.tile .main .top button.sound').on('click', e => {
+    let slider = $(e.currentTarget).closest('.top').find('.slider')
+    if (slider.is(':visible')) slider.hide(100)
+    else slider.show(100)
+  })
+
+  $(document).on('click', function (e) {
+    slide = $(e.target).closest('.slider, button.sound')
+    console.log(slide)
+
+    if (slide.length == 0) {
+      $('.tile .main .top .slider').hide(100)
+    }
+  })
+
+  $('.tile .main .top .slider input').on('input', e => {
+    //   TODO set volumen of closest sound wave
+    console.log('set volume')
+  })
 })
