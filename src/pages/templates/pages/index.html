@@ -49,7 +49,7 @@
     <main id="main-content">
         {% comment %} the main section {% endcomment %}
         <div id="yellow">
-            <div class="title">Discover what quacks</div>
+            <div class="title"><h1>Discover what quacks</h1></div>
             <div class="subtitle">Just drag n' drop your audio file here</div>
             <div class="drop-input" id="drop-input">
                 {% csrf_token %}
@@ -58,6 +58,910 @@
                 </div>
                 <div class="wave">
                     {% svg 'sine-wave' %}
+                </div>
+            </div>
+            <div class="hidden process">
+                Processing..
+            </div>
+            <div class="hidden progress-bar"></div>
+            <div class="hidden process-info">
+                Reading file..
+            </div>
+            <div class="hidden file-bar">
+                {% comment %} big green box that does stuff {% endcomment %}
+                <button>{% svg "play-solid" %}</button>
+                <div class="wave"></div>
+            </div>
+            <div class="hidden text">
+                <div class="found">
+                    Found the following distinct sounds
+                </div>
+                <div class="download">
+                    <a href="" download="sounds.zip">
+                        Download all occurences
+                    </a>
+                </div>
+            </div>
+            <div class="hidden tiles">
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <div class="main">
+                        <div class="top">
+                            <button>
+                                {% svg 'sound-high' %}
+                            </button>
+                            <span>#1</span>
+                            <button>
+                                {% svg 'download' %}
+                            </button>
+                        </div>
+                        <div class="wave">
+                            {% svg 'sine-wave' %}
+                        </div>
+                        <div class="more">
+                            <button>See more examples</button>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="side">
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                        <div class="sample">
+                            <button class="wave">
+                                {% svg 'sine-wave' %}
+                            </button>
+                            <button class="time">
+                                <span>1m 10s</span>
+                            </button>
+                            <a href="" class="download" download="">
+                                {% svg 'download' %}
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="how">
@@ -83,6 +987,30 @@
                 </div>
                 <div class="text">
                     Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ipsa optio soluta laboriosam eius maiores doloremque, atque, quisquam porro tempore minima animi nemo explicabo sed repudiandae earum totam ea similique tenetur.
+                </div>
+            </div>
+            <div class="seg">
+                <div class="text">
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Nam esse officia, harum eum dolores libero distinctio error nobis architecto dignissimos ducimus! Aliquid corrupti est aspernatur corporis iure necessitatibus quis delectus!
+                </div>
+                <div class="pic">
+                    {% svg 'profile-circle' %}
+                </div>
+            </div>
+            <div class="seg">
+                <div class="pic">
+                    {% svg 'sound-high' %}
+                </div>
+                <div class="text">
+                    Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ipsa optio soluta laboriosam eius maiores doloremque, atque, quisquam porro tempore minima animi nemo explicabo sed repudiandae earum totam ea similique tenetur.
+                </div>
+            </div>
+            <div class="seg">
+                <div class="text">
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Nam esse officia, harum eum dolores libero distinctio error nobis architecto dignissimos ducimus! Aliquid corrupti est aspernatur corporis iure necessitatibus quis delectus!
+                </div>
+                <div class="pic">
+                    {% svg 'play-solid' %}
                 </div>
             </div>
         </div>

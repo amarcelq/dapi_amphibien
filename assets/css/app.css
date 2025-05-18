@@ -2,7 +2,7 @@
   --color-yellow: #fab005;
   --color-green: #2f9e44;
   --color-black: #1e1e1e;
-  --radius-border: 0.2em;
+  --radius-border: 1em;
 }
 
 * {
@@ -13,6 +13,12 @@
   font-size: max(15px, 0.8vw);
 }
 
+h1 {
+  margin-block-start: 0px;
+  margin-block-end: 0px;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+}
 a {
   text-decoration: none;
   color: inherit;
@@ -102,8 +108,8 @@ body {
   justify-content: baseline;
 }
 
-#yellow .title {
-  margin-top: 3em;
+#yellow .title h1 {
+  margin-top: 2.5em;
   font-size: 5em;
   font-weight: bold;
   color: var(--color-green);
@@ -123,7 +129,7 @@ body {
   width: 20em;
   height: 5em;
   background-color: var(--color-green);
-  border-radius: 1em;
+  border-radius: var(--radius-border);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -150,7 +156,7 @@ body {
 }
 
 #yellow .drop-input.dragover .mic svg * {
-  stroke: var(--color-green) !important; 
+  stroke: var(--color-green) !important;
 }
 
 #yellow .drop-input .wave {
@@ -172,6 +178,210 @@ body {
 
 #yellow .drop-input.dragover .wave svg * {
   stroke: var(--color-green);
+}
+
+#yellow .process {
+  margin-top: 8em;
+  font-size: 2em;
+  font-weight: bold;
+  color: var(--color-green);
+  text-align: center;
+  max-width: 7em;
+}
+
+#yellow .progress-bar {
+  width: 7em;
+  height: 7em;
+  border-radius: 50%;
+  border: 0.25rem solid var(--color-green);
+  margin-top: 1em;
+  background: var(--color-yellow);
+  background: conic-gradient(var(--color-green) 0%, rgba(47, 158, 68, 0) 0%);
+}
+
+#yellow .process-info {
+  margin-top: 1em;
+  font-size: 1em;
+  font-weight: bold;
+  color: var(--color-green);
+  text-align: center;
+  max-width: 7em;
+}
+
+#yellow .file-bar {
+  margin: 2em 0em;
+  width: 80%;
+  height: 4em;
+  background-color: var(--color-green);
+  border-radius: var(--radius-border);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0.5em 1em;
+}
+
+#yellow .file-bar > button svg {
+  width: 2em;
+  height: auto;
+}
+
+#yellow .file-bar > button svg * {
+  fill: var(--color-black);
+}
+
+/* the text for the tiles */
+#yellow .text {
+  color: var(--color-green);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  padding: 0em 3em;
+  margin-bottom: 1em;
+}
+
+#yellow .text .found {
+  font-size: 2em;
+}
+
+#yellow .text .download {
+  font-size: 1.4em;
+  margin-left: auto;
+}
+
+#yellow .tiles {
+  display: flex;
+  flex-direction: row;
+  gap: 1em;
+  width: 100%;
+  padding: 0em 3em;
+  flex-wrap: wrap;
+  margin-bottom: 1em;
+}
+
+#yellow .tile {
+  width: 10em;
+  height: 10em;
+  border: 0.2em solid var(--color-black);
+  border-radius: var(--radius-border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  transition: width 500ms ease-out;
+}
+
+#yellow .tile.open {
+  width: 32em;
+}
+
+#yellow .tile .main {
+  min-width: 9.5em;
+  height: 9.5em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#yellow .tile .main .top {
+  margin: 0.25em 0em;
+  width: 100%;
+  height: 1.5em;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0em 0.5em;
+  justify-content: space-between;
+}
+
+#yellow .tile .main .top button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#yellow .tile .main .top svg {
+  height: 1.3em;
+  width: auto;
+}
+
+#yellow .tile .main .top svg * {
+  stroke: var(--color-black);
+}
+
+#yellow .tile .main .wave {
+  flex-grow: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#yellow .tile .main .wave svg {
+  height: 100%;
+  width: auto;
+}
+
+#yellow .tile .main .wave svg * {
+  stroke: var(--color-black);
+}
+
+#yellow .tile .main .more {
+  height: 1em;
+  margin: 0.5em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.9em;
+}
+
+#yellow .tile .divider {
+  height: 80%;
+  width: 0.2em;
+  border: 0.1em solid var(--color-black);
+  border-radius: 0.2em;
+  margin: 0em 0.1em;
+}
+
+#yellow .tile .side {
+  min-width: 22em;
+  width: 22em;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  height: 100%;
+  padding: 1em 1em;
+  overflow-x: scroll;
+}
+
+#yellow .tile .side .sample {
+  width: 8em;
+  margin: 0em 1em;
+  height: 2em;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+}
+
+#yellow .tile .side .sample span {
+  font-size: 0.7em;
+  text-align: center;
+}
+
+#yellow .tile .side .sample button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#yellow .tile .side .sample svg {
+  height: 1.5em;
+  width: auto;
+}
+
+#yellow .tile .side .sample svg * {
+  stroke: var(--color-black);
 }
 
 #yellow .how {
