@@ -5,16 +5,22 @@ import librosa
 from torch.utils.data import DataLoader
 import numpy as np
 import matplotlib.pyplot as plt
+from src.preprocessing.basic_preprocessing import BasicPreprocessor
+from src.preprocessing.denoise import DenoiseMethod, SpectralGate 
 from typing import Optional, List, Tuple
 import cv2
+from tqdm import tqdm
 
-FILES_DIR = Path(__file__).resolve().parent / "files"
+FILES_DIR = Path(__file__).resolve().parent.parent / "files"
 FILES_DIR.mkdir(parents=True, exist_ok=True)
 
 class AmphibDataset(Dataset):
     sample_rate: int = 192000
 
-    def __init__(self, parent_path_str: str):
+    def __init__(self, 
+                 parent_path_str: str, 
+                 basic_preprocessor: Optional[BasicPreprocessor] = None, 
+                 denoiser: Optional[DenoiseMethod] = None):
         self.file_paths = list()
         parent_path = Path(parent_path_str)
         if not parent_path.exists():
@@ -30,6 +36,10 @@ class AmphibDataset(Dataset):
             if size == median_size:
                 self.file_paths.append(path.with_name(path.stem + path.suffix.lower()))
 
+        self.basic_preprocessor = basic_preprocessor
+        # TODO: Might be smarter to first denoise and preprocess and afterwards create a dataloader (avoid denoise for each epoch)
+        self.denoiser = denoiser
+
     def __len__(self):
         return len(self.file_paths)
 
@@ -37,9 +47,16 @@ class AmphibDataset(Dataset):
         path = self.file_paths[idx]
         x, _ = librosa.load(path, sr=self.sample_rate)
 
+        if self.basic_preprocessor:
+            x = self.basic_preprocessor(x)
+
+        if self.denoiser:
+            x = self.denoiser(x)
+
         return x, str(path)
 
-def sound_to_image(x: np.ndarray, 
+
+def sound_to_spectogramm(x: np.ndarray, 
                    save_folder_path: Optional[Path] = None, 
                    save_file_name: Optional[str | Path] = None, 
                    show: bool = False, 
@@ -96,13 +113,18 @@ def load_image(path: str | Path, output_size: Optional[Tuple[int, int]] = None):
 
 if __name__ == "__main__":
     path = "/media/marcel/3831-6261/"
-    dataset = AmphibDataset(path)
-    batch_size = 64
-    dataloader = DataLoader(dataset, batch_size=batch_size)#, collate_fn=denoise)
-    for X_batch, paths_batch in dataloader:
+    basic_noise_path = FILES_DIR / "basic_mic_noise_with_crickets.wav"
+    basic_noise, _ = librosa.load(basic_noise_path, sr=AmphibDataset.sample_rate)
+    dataset = AmphibDataset(path, 
+                            BasicPreprocessor(sample_rate=AmphibDataset.sample_rate), 
+                            SpectralGate(sample_rate=AmphibDataset.sample_rate, noise_signal=basic_noise))
+    batch_size = 8
+    dataloader = DataLoader(dataset, batch_size=batch_size)
+    for X_batch, paths_batch in tqdm(dataloader):
             for x, path in zip(X_batch, paths_batch):
-                img_path = FILES_DIR / "spectogramms" / (Path(path).stem + ".png")
-                img = sound_to_image(x.numpy(), 
-                            save_folder_path=FILES_DIR / "spectogramms",
-                            save_file_name=Path(path).stem,
-                            model_optimized=True)
+                print(x)
+                # img_path = FILES_DIR / "spectogramms" / (Path(path).stem + ".png")
+                # img = sound_to_spectogramm(x.numpy(), 
+                #             save_folder_path=FILES_DIR / "spectogramms",
+                #             save_file_name=Path(path).stem,
+                #             model_optimized=True)

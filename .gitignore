@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *.so
 
+# anything in files folder
+src/files/*
+!src/files/basic_mic_noise_with_crickets.wav
+
 # Jupyter
 .ipynb_checkpoints
 
@@ -56,6 +60,3 @@ dist/
 .mypy_cache/
 .dmypy.json
 .pyre/
-
-# anything in files folder
-files/
