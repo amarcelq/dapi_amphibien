@@ -29,7 +29,8 @@ export function show_big_waveform (source_path) {
         height: '20',
         waveColor: '#999',
         progressColor: '#ddd',
-        normalize: true
+        normalize: true,
+        overlayColor: '#44444499'
         // the Minimap takes all the same options as the WaveSurfer itself
       })
     ]
@@ -49,4 +50,40 @@ export function show_big_waveform (source_path) {
       ws.pause()
     }
   })
+  ws.on('audioprocess', () => {
+    const currentTime = ws.getCurrentTime().toFixed(3)
+    $('#yellow .file-bar .info .time span').text(currentTime+"s")
+  })
 }
+
+export function show_tile_waveform (tile, source_path) {
+  var $tile = $(tile)
+  $tile.find('.main .wave *').remove()
+  var wave = WaveSurfer.create({
+    container: $tile.find('.main .wave')[0],
+    waveColor: 'rgb(53, 53, 53)',
+    progressColor: 'rgb(30, 30, 30)',
+    url: source_path,
+    minPxPerSec: 50,
+    hideScrollbar: true,
+    autoCenter: true,
+    height: 'auto',
+    normalize: true,
+    dragToSeek: true,
+    autoScroll: true,
+    autoCenter: true
+  })
+
+  // volume handlers
+  $tile.find('.main .top .slider input').on('input', e => {
+    var slider = $(e.currentTarget)
+    wave.setVolume(slider.val())
+  })
+
+  // play
+  $tile.on('click', e => {
+    wave.playPause()
+  })
+}
+
+window.show_tile_waveform = show_tile_waveform

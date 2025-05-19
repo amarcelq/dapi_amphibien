@@ -126,15 +126,8 @@ $(_ => {
 
   $(document).on('click', function (e) {
     slide = $(e.target).closest('.slider, button.sound')
-    console.log(slide)
-
     if (slide.length == 0) {
       $('.tile .main .top .slider').hide(100)
     }
-  })
-
-  $('.tile .main .top .slider input').on('input', e => {
-    //   TODO set volumen of closest sound wave
-    console.log('set volume')
   })
 })
