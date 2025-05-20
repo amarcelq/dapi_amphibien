@@ -32,9 +32,34 @@ function dummy_progress () {
     $('#yellow .process, #yellow .progress-bar, #yellow .process-info').hide()
     // show audio stuff (at this point dummy)
     $('#yellow .file-bar, #yellow .text, #yellow .tiles').fadeIn(fadeTime)
-    show_big_waveform(
-      '/media/sessions/p8j9rvbb3b135e4cgr2hfd46bnufs7uq/upload.wav'
-    )
+    // get results from end point
+    $.getJSON('/result', function (data) {
+      console.log('Result:', data)
+      // Process the JSON result as needed
+      show_big_waveform(data.main_audio.url)
+      // preset tile
+      const $tile = $(`body>.tile.PRESET`)
+      const $snippet = $(`body>.sample.PRESET`)
+      const $container = $('#yellow .tiles')
+      for (const sample of data.samples) {
+        // create new tile
+        const $new = $tile.clone(true).removeClass("PRESET")
+        $new.find('.main .top .name').text(sample.name)
+
+        const $sample_container = $new.find(".side")
+        // add snippets
+        for (const snip of sample.snippets) {
+          const $new_snip = $snippet.clone(true).removeClass("PRESET")
+          $new_snip.find('.time span').text(snip.start)
+          $new_snip.find('a.download').attr('href', snip.url)
+          //   append to tile
+          $new_snip.appendTo($sample_container)
+        }
+        //   at end append tile to DOM
+        $new.appendTo($container)
+        // show wave form(s)
+      }
+    })
   }
 }
 

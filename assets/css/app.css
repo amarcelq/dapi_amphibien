@@ -1,6 +1,7 @@
 :root {
-  --color-yellow: #fab005;
-  --color-green: #2f9e44;
+    /* fab005 */
+  --color-yellow: #f5b31b;
+  --color-green: #24a83c;
   --color-black: #1e1e1e;
   --radius-border: 1em;
 }
@@ -78,6 +79,10 @@ button {
 
 .hidden {
   display: none !important;
+}
+
+.PRESET {
+    display: none !important;
 }
 
 /* body */
@@ -307,6 +312,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding-left: 0.3em;
 }
 
 #yellow .file-bar .info .more {
