@@ -67,12 +67,12 @@ def result(request):
             {
                 "id": "id-to-be-implemented", # session-unique id for this sample type
                 "name": "#1", # Each sample has a displayed name
-                "snippets": [{"url": "", "start": 1000, "end": 2000}], # and snippets, which each point to a unique snippet url. The start and end time in ms is relative to the original audio track
+                "snippets": [{"url": "", "start": 10000, "duration": 5000}], # and snippets, which each point to a unique snippet url. The start and end time in ms is relative to the original audio track
             },
             {
                 "id": "id-to-be-implemented", # session-unique id for this sample type
                 "name": "#2", # Each sample has a displayed name
-                "snippets": [{"url": "", "start": 3000, "end": 3500}], # and snippets, which each point to a unique snippet url. The start and end time in ms is relative to the original audio track
+                "snippets": [{"url": "", "start": 3500, "duration": 1000}], # and snippets, which each point to a unique snippet url. The start and end time in ms is relative to the original audio track
             }
         ],
     }

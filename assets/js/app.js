@@ -1,5 +1,5 @@
 import $ from 'jquery'
-import { show_big_waveform } from './audio'
+import { show_big_waveform, jump_to_position } from './audio'
 
 const fadeTime = 150
 
@@ -43,15 +43,17 @@ function dummy_progress () {
       const $container = $('#yellow .tiles')
       for (const sample of data.samples) {
         // create new tile
-        const $new = $tile.clone(true).removeClass("PRESET")
+        const $new = $tile.clone(true).removeClass('PRESET')
         $new.find('.main .top .name').text(sample.name)
 
-        const $sample_container = $new.find(".side")
+        const $sample_container = $new.find('.side')
         // add snippets
         for (const snip of sample.snippets) {
-          const $new_snip = $snippet.clone(true).removeClass("PRESET")
-          $new_snip.find('.time span').text(snip.start)
+          const $new_snip = $snippet.clone(true).removeClass('PRESET')
+          $new_snip.find('.time span').text(ms_to_minute_string(snip.start))
           $new_snip.find('a.download').attr('href', snip.url)
+          $new_snip.data('start', snip.start)
+          $new_snip.data('duration', snip.duration)
           //   append to tile
           $new_snip.appendTo($sample_container)
         }
@@ -72,6 +74,12 @@ function dummy_file () {
 
 window.dummy_progress = dummy_progress
 window.dummy_file = dummy_file
+
+function ms_to_minute_string (ms) {
+  const minutes = Math.floor(ms / 60000)
+  const seconds = Math.floor((ms % 60000) / 1000)
+  return `${minutes}m ${seconds}s`
+}
 
 $(_ => {
   console.log('Jquery loaded')
@@ -154,5 +162,13 @@ $(_ => {
     if (slide.length == 0) {
       $('.tile .main .top .slider').hide(100)
     }
+  })
+  // will be set on start, so only presets exist atm
+  $('.sample.PRESET .time').on('click', e => {
+    const $sample = $(e.currentTarget).closest('.sample')
+    // set big waveform to specified position
+    console.log($sample.data('start'), $sample.data('duration'))
+
+    jump_to_position($sample.data('start'), $sample.data('duration'))
   })
 })

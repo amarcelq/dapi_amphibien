@@ -41,6 +41,14 @@ export function show_big_waveform (source_path) {
     $play_button.removeClass('paused')
   })
 
+  ws.on('pause', _ => {
+    $play_button.addClass('paused')
+  })
+
+  ws.on('play', _ => {
+    $play_button.removeClass('paused')
+  })
+
   $play_button.on('click', e => {
     if ($play_button.hasClass('paused')) {
       $play_button.removeClass('paused')
@@ -52,7 +60,7 @@ export function show_big_waveform (source_path) {
   })
   ws.on('audioprocess', () => {
     const currentTime = ws.getCurrentTime().toFixed(3)
-    $('#yellow .file-bar .info .time span').text(currentTime+"s")
+    $('#yellow .file-bar .info .time span').text(currentTime + 's')
   })
 }
 
@@ -70,10 +78,8 @@ export function show_tile_waveform (tile, source_path) {
     height: 'auto',
     normalize: true,
     dragToSeek: true,
-    autoScroll: true,
-    autoCenter: true
+    autoScroll: true
   })
-
   // volume handlers
   $tile.find('.main .top .slider input').on('input', e => {
     var slider = $(e.currentTarget)
@@ -87,3 +93,9 @@ export function show_tile_waveform (tile, source_path) {
 }
 
 window.show_tile_waveform = show_tile_waveform
+
+export function jump_to_position (position_in_ms, duration = null) {
+  if (duration) {
+    ws.play(position_in_ms / 1000, (position_in_ms + duration) / 1000)
+  } else ws.play(position_in_ms / 1000)
+}
