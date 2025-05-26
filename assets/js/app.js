@@ -1,5 +1,9 @@
 import $ from 'jquery'
-import { show_big_waveform, jump_to_position } from './audio'
+import {
+  show_big_waveform,
+  jump_to_position,
+  show_tile_waveform
+} from './audio'
 
 const fadeTime = 150
 
@@ -24,45 +28,55 @@ function dummy_progress () {
   ]
   const progress_text =
     progress_texts[Math.floor(Math.random() * progress_texts.length)]
-  updateProgressBar(progress, progress_text)
+  updateProgressBar((-1 / (0.23 * progress + 1) + 1) * 100, progress_text)
 
   // if progress is >=100 do the steps the progres route would do
   if (progress >= 100) {
-    // hide progress stuff
-    $('#yellow .process, #yellow .progress-bar, #yellow .process-info').hide()
-    // show audio stuff (at this point dummy)
-    $('#yellow .file-bar, #yellow .text, #yellow .tiles').fadeIn(fadeTime)
-    // get results from end point
-    $.getJSON('/result', function (data) {
-      console.log('Result:', data)
-      // Process the JSON result as needed
-      show_big_waveform(data.main_audio.url)
-      // preset tile
-      const $tile = $(`body>.tile.PRESET`)
-      const $snippet = $(`body>.sample.PRESET`)
-      const $container = $('#yellow .tiles')
-      for (const sample of data.samples) {
-        // create new tile
-        const $new = $tile.clone(true).removeClass('PRESET')
-        $new.find('.main .top .name').text(sample.name)
-
-        const $sample_container = $new.find('.side')
-        // add snippets
-        for (const snip of sample.snippets) {
-          const $new_snip = $snippet.clone(true).removeClass('PRESET')
-          $new_snip.find('.time span').text(ms_to_minute_string(snip.start))
-          $new_snip.find('a.download').attr('href', snip.url)
-          $new_snip.data('start', snip.start)
-          $new_snip.data('duration', snip.duration)
-          //   append to tile
-          $new_snip.appendTo($sample_container)
-        }
-        //   at end append tile to DOM
-        $new.appendTo($container)
-        // show wave form(s)
-      }
-    })
+    finish_process()
   }
+}
+
+function finish_process () {
+  // hide progress stuff
+  $('#yellow .process, #yellow .progress-bar, #yellow .process-info').hide()
+  // show audio stuff (at this point dummy)
+  $('#yellow .file-bar, #yellow .text, #yellow .tiles').fadeIn(fadeTime)
+  // get results from end point
+  $.getJSON('/result', function (data) {
+    console.log('Result:', data)
+    // Process the JSON result as needed
+    show_big_waveform(data.main_audio.url)
+    // preset tile
+    const $tile = $(`body>.tile.PRESET`)
+    const $snippet = $(`body>.sample.PRESET`)
+    const $container = $('#yellow .tiles')
+    for (const sample of data.samples) {
+      // create new tile
+      const $new = $tile.clone(true).removeClass('PRESET')
+      $new.find('.main .top .name').text(sample.name)
+
+      // first snipped is big one:
+      const big_snippet = sample.snippets.shift()
+      $new.data('start', big_snippet.start)
+      $new.data('duration', big_snippet.duration)
+
+      const $sample_container = $new.find('.side')
+      // add snippets
+      for (const snip of sample.snippets) {
+        const $new_snip = $snippet.clone(true).removeClass('PRESET')
+        $new_snip.find('.time span').text(ms_to_minute_string(snip.start))
+        $new_snip.find('a.download').attr('href', snip.url)
+        $new_snip.data('start', snip.start)
+        $new_snip.data('duration', snip.duration)
+        //   append to tile
+        $new_snip.appendTo($sample_container)
+      }
+      //   at end append tile to DOM
+      $new.appendTo($container)
+      // show wave form(s)
+      show_tile_waveform($new, big_snippet.url)
+    }
+  })
 }
 
 function dummy_file () {
@@ -136,6 +150,7 @@ $(_ => {
         $(
           '#yellow .process, #yellow .progress-bar, #yellow .process-info'
         ).fadeIn(fadeTime)
+        pollProgress()
       }
     })
   })
@@ -172,3 +187,30 @@ $(_ => {
     jump_to_position($sample.data('start'), $sample.data('duration'))
   })
 })
+
+function pollProgress () {
+  const pollInterval = 500 // 1 second
+  const $progress_name = $('#yellow .process')
+  const $progress_desc = $('#yellow .process-info')
+  let last_pogress = ''
+  function fetchProgress () {
+    $.getJSON('/progress', function (data) {
+      console.log(data)
+      $progress_name.text(data.name)
+      $progress_desc.text(data.description)
+      if (last_pogress != data.description) {
+        last_pogress = data.description
+        progress += 1
+        updateProgressBar((-1 / (0.23 * progress + 1) + 1) * 100)
+      }
+      if (data.status === 'done') {
+        updateProgressBar(1000000)
+        finish_process()
+      } else {
+        setTimeout(fetchProgress, pollInterval)
+      }
+    })
+  }
+
+  fetchProgress()
+}

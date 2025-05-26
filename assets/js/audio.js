@@ -37,7 +37,8 @@ export function show_big_waveform (source_path) {
   })
 
   ws.on('interaction', () => {
-    ws.play()
+      ws.play()
+      
     $play_button.removeClass('paused')
   })
 
@@ -73,7 +74,7 @@ export function show_tile_waveform (tile, source_path) {
     progressColor: 'rgb(30, 30, 30)',
     url: source_path,
     minPxPerSec: 50,
-    hideScrollbar: true,
+    hideScrollbar: false,
     autoCenter: true,
     height: 'auto',
     normalize: true,
@@ -87,7 +88,7 @@ export function show_tile_waveform (tile, source_path) {
   })
 
   // play
-  $tile.on('click', e => {
+  $tile.find(".main .wave").on('click', e => {
     wave.playPause()
   })
 }
