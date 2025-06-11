@@ -14,7 +14,9 @@ Sound Seperation -> Feature Extraktion -> Dimensionsreduktion -> Clustering
 ggf. Datensatz von hier mit zum trainieren benutzen https://www.frogid.net.au/
 
 
+Audio Feature Extraktion mit Neuronalen Netzen: https://docs.pytorch.org/audio/stable/tutorials/audio_feature_extractions_tutorial.html
 
+Basic approaches:
 MFCC + PCA + GMM/BGMM: Effective for general audio clustering.
 MFCC + UMAP + DBSCAN: Captures nonlinear structure, density-based clustering handles noise.
 Spectral features + t-SNE + SpectralClustering: Good for complex spectral patterns, nonlinear embedding.
