@@ -138,6 +138,11 @@ class Wiener(DenoiseMethod):
         # Reconstruct time-domain signal
         return librosa.istft(enhanced_stft)
 
+# TODO: I think to remove noise with this classic methods is enough but if not we might
+# TODO: can improve it by learning a defusion model (really extensive and therefor just reasonable
+# TODO: if we see the noise it our main problem)
+
+
 if __name__ == "__main__":
     pass
     # basic_noise_path = FILES_DIR / "basic_mic_noise_with_crickets.wav"

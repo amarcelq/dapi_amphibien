@@ -1,0 +1,22 @@
+https://github.com/f90/Wave-U-Net
+https://github.com/santi-pdp/segan
+https://github.com/darkdante2209/DeepXi
+https://github.com/adefossez/demucs
+
+https://ieeexplore.ieee.org/abstract/document/8937253?casa_token=n9iadpT7QUcAAAAA:vO7ArRlIBpt-eqgkBp2R2giDzkAXW3t1P1UsVb7dLp5PMyatTk0C3eji_eS4O_2Va6jUeTrhKTk
+https://proceedings.neurips.cc/paper/2020/hash/28538c394c36e4d5ea8ff5ad60562a93-Abstract.html
+
+https://www.sciencedirect.com/science/article/abs/pii/S0165168424001063
+
+Vorgehen:
+Sound Seperation -> Feature Extraktion -> Dimensionsreduktion -> Clustering
+
+ggf. Datensatz von hier mit zum trainieren benutzen https://www.frogid.net.au/
+
+
+
+MFCC + PCA + GMM/BGMM: Effective for general audio clustering.
+MFCC + UMAP + DBSCAN: Captures nonlinear structure, density-based clustering handles noise.
+Spectral features + t-SNE + SpectralClustering: Good for complex spectral patterns, nonlinear embedding.
+Chroma + PCA + AHC: Works if harmonic content is key, hierarchical clustering suits smaller clusters.
+
