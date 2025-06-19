@@ -15,35 +15,21 @@ class FeatureReductionMethod(ABC):
 
 # good for linear
 class PCA(FeatureReductionMethod):
-    def __init__(self, n_dims: Optional[int] = None, variance_cutoff: float = 0.98, x=None):
+    def __init__(self, n_dims: Optional[int] = None, variance_cutoff: Optional[float] = 0.98):
         self.scaler = preprocessing.StandardScaler()
         self.variance_cutoff = variance_cutoff
-        self.x = x
 
-        if n_dims is None:
-            if x is None:
-                raise ValueError("Data 'x' must be provided to compute number of dimensions.")
-            self.x_scaled = self.scaler.fit_transform(x)
-            n_dims = self._calc_n_dims(self.x_scaled)
-            print(f"Calculated n_dims: {n_dims}")
+        if n_dims is None and variance_cutoff is None:
+            raise ValueError("You have to provide n_dims or variance.")
+
+        if n_dims is not None:
+            self.pca = decomposition.PCA(n_components=n_dims)
         else:
-            self.x_scaled = self.scaler.fit_transform(x) if x is not None else None
+            self.pca = decomposition.PCA(n_components=variance_cutoff)
 
-        self.pca = decomposition.PCA(n_components=n_dims)
-
-    def __call__(self, x=None):
-        if x is None:
-            if self.x_scaled is None:
-                raise ValueError("No data provided and no internal data available.")
-            return self.pca.fit_transform(self.x_scaled)
+    def __call__(self, x):
         x = self.scaler.fit_transform(x)
         return self.pca.fit_transform(x)
-
-    def _calc_n_dims(self, x_scaled):
-        pca = decomposition.PCA()
-        pca.fit(x_scaled)
-        cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
-        return np.argmax(cumulative_variance >= self.variance_cutoff) + 1
 
 # good for non linear
 class UMAP(FeatureReductionMethod):

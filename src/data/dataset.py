@@ -5,11 +5,14 @@ import librosa
 from torch.utils.data import DataLoader
 import numpy as np
 import matplotlib.pyplot as plt
-from src.preprocessing.basic_preprocessing import BasicPreprocessor
-from src.preprocessing.denoise import DenoiseMethod, SpectralGate 
-from typing import Optional, List, Tuple
+from preprocessing.basic_preprocessing import BasicPreprocessor
+from preprocessing.denoise import DenoiseMethod, SpectralGate 
+from typing import Optional, List, Tuple, Sequence
 import cv2
 from tqdm import tqdm
+import soundfile as sf
+import atexit
+import shutil
 
 FILES_DIR = Path(__file__).resolve().parent.parent / "files"
 FILES_DIR.mkdir(parents=True, exist_ok=True)
@@ -17,45 +20,71 @@ FILES_DIR.mkdir(parents=True, exist_ok=True)
 class AmphibDataset(Dataset):
     sample_rate: int = 192000
 
-    def __init__(self, 
-                 parent_path_str: str, 
+    def __init__(self,
+                 parent_path_str: Optional[str] = None, 
                  basic_preprocessor: Optional[BasicPreprocessor] = None, 
-                 denoiser: Optional[DenoiseMethod] = None):
-        self.file_paths = list()
-        parent_path = Path(parent_path_str)
-        if not parent_path.exists():
-            raise FileNotFoundError(f"parent_path: {parent_path_str} does not exist.")
-        all_paths = list(parent_path.rglob("*.WAV"))
-        if len(all_paths) == 0:
-            return
-        file_sizes = np.array([p.stat().st_size for p in all_paths])
+                 denoiser: Optional[DenoiseMethod] = None,
+                 file_paths: Optional[str | Path | Sequence[str] | Sequence[Path]] = None,
+                 return_paths: bool = True):
+        self.file_paths = []
 
-        # drop all files which dont have the same size as the other to have a dataset of equal len arrays
-        median_size = np.median(file_sizes)
-        for path, size in zip(all_paths, file_sizes):
-            if size == median_size:
-                self.file_paths.append(path.with_name(path.stem + path.suffix.lower()))
+        self.return_paths = return_paths
+
+        if file_paths:
+            if isinstance(file_paths, (str, Path)):
+                file_paths = [file_paths]
+            self.file_paths = [Path(f).with_name(Path(f).stem + Path(f).suffix.lower()) for f in file_paths]
+        
+        if parent_path_str:
+            parent_path = Path(parent_path_str)
+            if not parent_path.exists():
+                raise FileNotFoundError(f"parent_path: {parent_path_str} does not exist.")
+            all_paths = list(parent_path.rglob("*.WAV"))
+            if len(all_paths) == 0:
+                return
+            file_sizes = np.array([p.stat().st_size for p in all_paths])
+
+            # drop all files which dont have the same size as the other to have a dataset of equal len arrays
+            median_size = np.median(file_sizes)
+            for path, size in zip(all_paths, file_sizes):
+                if size == median_size:
+                    self.file_paths.append(path.with_name(path.stem + path.suffix.lower()))
 
         self.basic_preprocessor = basic_preprocessor
-        # TODO: Might be smarter to first denoise and preprocess and afterwards create a dataloader (avoid denoise for each epoch)
         self.denoiser = denoiser
+        self.cache_dir = FILES_DIR / "cache_denoised"
+        self.cache_dir.mkdir(exist_ok=True)
+
+        atexit.register(self.cleanup_cache)
+
+    def cleanup_cache(self):
+        if self.cache_dir.exists():
+            shutil.rmtree(self.cache_dir)
 
     def __len__(self):
         return len(self.file_paths)
 
     def __getitem__(self, idx):
         path = self.file_paths[idx]
-        x, _ = librosa.load(path, sr=self.sample_rate)
+        cache_path = self.cache_dir / path.name
 
-        if self.basic_preprocessor:
-            x = self.basic_preprocessor(x)
+        if cache_path.exists():
+            x = np.load(cache_path.with_suffix(".npz"))["x"]
+        else:
+            x, _ = librosa.load(path, sr=self.sample_rate)
 
-        if self.denoiser:
-            x = self.denoiser(x)
+            if self.denoiser:
+                x = self.denoiser(x)
+            if self.basic_preprocessor:
+                x = self.basic_preprocessor(x)
+            np.savez_compressed(cache_path.with_suffix(".npz"), x=x)
 
-        return x, str(path)
-
-
+        # need to use str instead of path since dataloader dont't support paths
+        if self.return_paths:
+            return x, str(path)
+        else:
+            return x
+        
 def sound_to_spectogramm(x: np.ndarray, 
                    save_folder_path: Optional[Path] = None, 
                    save_file_name: Optional[str | Path] = None, 

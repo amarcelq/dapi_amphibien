@@ -1,22 +1,30 @@
+#!/usr/bin/env python3
 import numpy as np
 import librosa
 import pyloudnorm as pyln
-from typing import Optional, Literal, Dict
+from typing import Optional, Literal, Dict, Iterable
 
 class BasicPreprocessor:
     def __init__(self,
                 sample_rate: int,
+                add_freq_dim: Optional[Iterable] = (-1, 1, -1),
+                parts_len: Optional[int | float] = None,
                 mono: bool = False,
                 normalize: Optional[Literal["range", "lufs"]] = "range",
                 normalize_options: Optional[Dict] = None,
                 trim: bool = True,
-                trim_options: Optional[Dict] = None):
+                trim_options: Optional[Dict] = None,
+                resample_rate: Optional[int] = None):
+
         self.mono = mono
+        self.add_freq_dim = add_freq_dim
         self.sample_rate = sample_rate
         self.normalize = normalize
         self.normalize_options = normalize_options or {}
         self.trim = trim
         self.trim_options = trim_options or {}
+        self.parts_len = parts_len
+        self.resample_rate = resample_rate
 
     @staticmethod
     def convert_to_mono(x: np.ndarray) -> np.ndarray:
@@ -38,9 +46,29 @@ class BasicPreprocessor:
         return x_normalized
 
     @staticmethod
+    def split(x: np.ndarray, parts_len: int | float, sample_rate: int, drop_last = True):
+        segment_length = int(sample_rate * parts_len)
+        x_parts = list()
+
+        num_parts = int(len(x) // segment_length)
+        for i in range(num_parts):
+            start = i * segment_length
+            end = start + segment_length
+            x_parts.append(x[start:end])
+
+        if not drop_last and len(x) % segment_length != 0:
+            x_parts.append(x[num_parts * segment_length:])
+
+        return np.array(x_parts)
+
+    @staticmethod
     def trim_silence(x: np.ndarray, top_db: int = 65) -> np.ndarray:
         x_trimmed, _ = librosa.effects.trim(x, top_db=top_db)
         return x_trimmed
+    
+    @staticmethod
+    def resample(x: np.ndarray, sample_rate: int, resample_rate: int):
+        return librosa.resample(x, orig_sr=sample_rate, target_sr=resample_rate)
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         if self.mono:
@@ -54,4 +82,14 @@ class BasicPreprocessor:
         if self.trim:
             x = self.trim_silence(x, **self.trim_options)
 
+        if self.resample_rate:
+            x = self.resample(x, self.sample_rate, self.resample_rate)
+
+        if self.parts_len:
+            x = self.split(x, parts_len=self.parts_len, sample_rate=self.sample_rate)
+    
+        if self.add_freq_dim:
+            x = np.expand_dims(x, axis=1)
+
         return x
+    

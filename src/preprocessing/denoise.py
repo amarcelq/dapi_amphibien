@@ -10,7 +10,7 @@ from scipy.signal import welch
 import matplotlib.pyplot as plt
 import librosa
 from abc import ABC, abstractmethod
-from src import utils
+import utils
 
 # From the picutre it seems like stationary white noise
 def analyse_noise(x: np.ndarray, 
@@ -137,6 +137,8 @@ class Wiener(DenoiseMethod):
         
         # Reconstruct time-domain signal
         return librosa.istft(enhanced_stft)
+
+# TODO: maybe try: https://github.com/lab-emi/CleanUMamba/tree/main , https://github.com/youshanzhang/birdsoundsdenoising , https://github.com/rubenohana/Gibbs-Diffusion
 
 # TODO: I think to remove noise with this classic methods is enough but if not we might
 # TODO: can improve it by learning a defusion model (really extensive and therefor just reasonable
