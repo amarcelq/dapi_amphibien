@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-import numpy as np
 from sklearn import preprocessing, decomposition, manifold
 import umap
 

@@ -43,7 +43,7 @@ class Chroma(FeatureExtractMethod):
         self.sample_rate = sample_rate
         self.mono = mono
 
-    def __call__(self, x):
+    def __call__(self, x: np.array):
         x = librosa.feature.chroma_stft(y=x, sr=self.sample_rate)
         # squeeze freq
         if self.mono and x.ndim == 4:
@@ -51,3 +51,10 @@ class Chroma(FeatureExtractMethod):
 
         # flatten features
         return x.reshape(*x.shape[:-2], -1)
+
+class OpenL3Embedding(FeatureExtractMethod):
+
+    def __call__(self, x):
+        x = [X[i].numpy() for i in range(X.shape[0])]
+        X, _ = openl3.get_audio_embedding(x, AmphibDataset.sample_rate, content_type="env")
+        X = np.array(X)
