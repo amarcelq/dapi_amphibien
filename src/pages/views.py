@@ -12,6 +12,8 @@ from pages.tasks import process
 
 
 def home(request:HttpRequest):
+    request.session['init'] = True
+    request.session.save()
     return render(request, "pages/index.html")
 
 
