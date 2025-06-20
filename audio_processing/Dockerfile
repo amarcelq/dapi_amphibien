@@ -10,10 +10,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY . /app
 WORKDIR /app
 
-RUN uv sync
+RUN uv sync --locked
+ENV PATH="/app/.venv/bin:$PATH"
 
-# Expose FastAPI port
-EXPOSE 8000
+# # Expose FastAPI port
+# EXPOSE 8000
 
 # Start FastAPI app with uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7777"]
+# CMD ["tail", "-f", "/dev/null"]
