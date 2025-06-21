@@ -7,7 +7,11 @@
 <h3 align="center">Frogs</h3>
 <p align="center">
 A web application to discover different frogs in a recording
-
+<br/>
+<br/>
+<a href="#getting-started"><strong>Getting Started »</strong></a>
+<a href="#how-it-works-and-what-weve-tried"><strong>How it works »</strong></a>
+<a href="#future-steps"><strong>Future Steps »</strong></a>
 
   
 
@@ -72,15 +76,21 @@ In some cases it could be necessary to install the dependencies manually (e.g. w
 4. Now everything should be up and running and you should see the application at `localhost:8000`!
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
-
-_For more examples, please refer to the [Documentation](https://example.com)_
+When the page is running, drag n' drop a sound file (`.wav`) onto the green box. The site will begin processing it showing a progress bar. 
+![Process Image](docs/pics/progress.png)
+After it is done progressing, it will show the originial recording, as well as all found clusters of sound. Those should be frogs, but it can also happen that other sounds find their way there. Just Click on the wave forms to listen to a sample of them. To see all samples of one cluster, exapnd the tile by clicking on "Show more". 
+![Tiles Image]()
 
 ## How it works and what we've tried
 idkdidkidk
 
 ## Future Steps
-...
+Here now follows a list with things that could be added to the project or which's foundations already been laid, but would be outside of the scope for this project.
+
+- User Accounts:
+  - There could be user accounts to store found clusters, share them with other useres etc. The foundation for that is already there, but wa snot necessary for this project.
+- Uploading multiple files:
+  - Right now only one file can be uplaoded and will be analyzed. In the future the user could upload multiple files which could be joined internaly to process all at once.
 
 ## License
 

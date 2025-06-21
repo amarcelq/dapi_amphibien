@@ -24,7 +24,8 @@ import config.views as views
 urlpatterns = [
     path("up/", include("up.urls")),
     path("", include("pages.urls")),
-    path("internal/progress/update/", views.progress_update)
+    path("internal/progress/update/", views.progress_update),
+    path("internal/progress/finish/", views.progress_finish)
     # path("admin/", admin.site.urls),
 ]
 
