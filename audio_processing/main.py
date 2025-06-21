@@ -2,7 +2,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import asyncio
-from data.dataset import AmphibDataset, FILES_DIR, KaggleAnuranSoundDataset, MixedAudioDataset
+from data.dataset import AmphibDataset, FILES_DIR, KaggleAnuranSoundDataset, MixedAudioDataset, YouTubeNoiseDataset
+from data.utils import download_mixture_audio
 from preprocessing.denoise import SpectralGate, DenoiseMethod
 from preprocessing.basic_preprocessing import BasicPreprocessor
 from torch.utils.data import DataLoader
@@ -22,10 +23,16 @@ import torch
 from torch.utils.data import random_split
 import os
 import requests
+from scipy.spatial.distance import euclidean
 
 TRAIN: bool = False
 SAMPLE_RATE: int = 8000
-SILENCE_THRESHOLD = 60
+SILENCE_THRESHOLD = 35
+FROG_MEAN_PATH = FILES_DIR / "frog_mean.npy"
+FROG_MEAN = np.load(FROG_MEAN_PATH) if FROG_MEAN_PATH.exists() else None
+NON_FROG_MEAN_PATH = FILES_DIR / "no_frog_mean.npy"
+NON_FROG_MEAN = np.load(NON_FROG_MEAN_PATH) if NON_FROG_MEAN_PATH.exists() else None
+TARGET_LEN = 5
 
 app = FastAPI()
 
@@ -63,62 +70,134 @@ def create_datasets(data_path: Sequence[str] | Sequence[Path], denoiser: Optiona
 
     kaggle_path = kagglehub.dataset_download("mehmetbayin/anuran-sound-frogs-or-toads-dataset")
     kaggle_dataset = KaggleAnuranSoundDataset(kaggle_path, AmphibDataset.sample_rate)
-    mixture_dataset = MixedAudioDataset(kaggle_dataset, FILES_DIR / "youtube_sounds", target_len=5, sample_rate=AmphibDataset.sample_rate)
 
-    return dataset, kaggle_dataset, mixture_dataset
+    youtube_sounds_path = FILES_DIR / "youtube_sounds"
+    if not youtube_sounds_path.exists():
+        download_mixture_audio()
 
-def get_frog_cluster(x: torch.Tensor):
-    # TODO: Combine and Mean some frog sounds and lay them in the middle of both clusters and take the one with lesser distance
-    pass
+    youtube_dataset = YouTubeNoiseDataset(
+        youtube_folder=youtube_sounds_path,
+        target_len=TARGET_LEN,
+        sample_rate=AmphibDataset.sample_rate
+    )
+
+    mixture_dataset = MixedAudioDataset(
+        kaggle_dataset=kaggle_dataset,
+        youtube_dataset=youtube_dataset,
+        target_len=TARGET_LEN,
+        sample_rate=AmphibDataset.sample_rate
+    )
+
+    return dataset, kaggle_dataset, youtube_dataset, mixture_dataset
+
+def mean_dataset(dataset, sample_rate: int, target_len: int = 5, use_n_samples: Optional[int] = None) -> np.ndarray:
+    target_len = int(sample_rate * target_len)
+    total_sum = torch.zeros(target_len)
+    total_count = 0
+
+    for i, x in enumerate(dataset):
+        if use_n_samples is not None and i >= use_n_samples:
+            break
+        x = x[:target_len]
+        pad_width = target_len - x.shape[0]
+        if pad_width > 0:
+            pad_value = 10 ** (SILENCE_THRESHOLD / 20)
+            x = torch.nn.functional.pad(x, (0, pad_width), value=pad_value)
+        total_sum += x
+        total_count += 1
+
+    return (total_sum / total_count).numpy()
+
+def is_frog_cluster(x: torch.Tensor | np.ndarray,
+                    frog_mean: np.ndarray,
+                    non_frog_mean: np.ndarray,
+                    sample_rate: int,
+                    target_len: int) -> bool:
+    
+    target_len = int(target_len * sample_rate)
+    x_np = x.numpy() if isinstance(x, torch.Tensor) else x
+    frog_votes = 0
+    non_frog_votes = 0
+
+    for i in range(0, len(x_np) - target_len + 1, target_len):
+        chunk = x_np[i:i + target_len]
+        dist_frog = euclidean(chunk, frog_mean)
+        dist_non_frog = euclidean(chunk, non_frog_mean)
+        if dist_frog < dist_non_frog:
+            frog_votes += 1
+        else:
+            non_frog_votes += 1
+
+    return frog_votes > non_frog_votes
 
 def predict_cluster(x: np.ndarray | torch.Tensor,
                     clusterer: ClusteringMethod,
-                    sound_seperator: Optional[SoundSperationMethod] = None,
+                    frog_mean: np.ndarray,
+                    non_frog_mean: np.ndarray,
+                    sound_seperator: SoundSperationMethod,
                     denoiser: Optional[DenoiseMethod] = None,
                     feature_extractor: Optional[FeatureExtractMethod] = None,
                     feature_reductor: Optional[FeatureReductionMethod] = None,
-                    session_key: Optional[str] = None
+                    session_key: Optional[str] = None,
                     ) -> dict:
     
     
     features: torch.Tensor | np.ndarray = torch.Tensor(x) if isinstance(x, np.ndarray) else x
-    if sound_seperator:
+    if session_key:
+        requests.post(create_post_content(session_key=session_key, 
+                            name=f"Seperate Sources with {sound_seperator.__class__.__name__}",
+                            description="Seperate Sources"))
+        
+    frogs = list()
+    stack = [features]
+    i = 1
+    while stack:
         if session_key:
             requests.post(create_post_content(session_key=session_key, 
-                                name=f"Seperate Sources with {sound_seperator.__class__.__name__}",
-                                description="Seperate Sources"))
-        features = features.reshape(1, 1, -1)
-        _seperated = sound_seperator.pred(features)
-        print(_seperated)
-        # TODO: Implement this function!
-        #get_frog_cluster()
-        x = _seperated[0, 1, :].numpy()#.reshape(-1, 1)
-        print(x.shape)
-        features = x
+                                name=f"Sound Seperation with {sound_seperator.__class__.__name__}",
+                                description=f"Sound Seperation Iteration: {i}"))  
+        current = stack.pop()
+        current = current.reshape(1, 1, -1)
+        _separated = sound_seperator.pred(current)
+
+        source_1 = _separated[0, 0, :].numpy()
+        source_2 = _separated[0, 1, :].numpy()
+
+        for source in (source_1, source_2):
+            i += 1
+            print(i)
+            if is_frog_cluster(source, 
+                               frog_mean, 
+                               non_frog_mean, 
+                               sample_rate=SAMPLE_RATE, 
+                               target_len=TARGET_LEN) and (len(frogs) == 0 or not np.allclose(frogs[-1], source, atol=1e-3)):
+                    frogs.append(source)
+                    stack.append(source)
+    print(frogs)
+    exit(0)
 
     if denoiser:
         if session_key:
             requests.post(create_post_content(session_key=session_key, 
                                 name=f"Denoise Seperated Sources with {denoiser.__class__.__name__}",
                                 description="Denoise seperated Sources"))    
-        print(x)
         x = denoiser(x)
-        print(x)
         features = x
 
-    if feature_extractor:
-        if session_key:
-            requests.post(create_post_content(session_key=session_key, 
-                                name=f"Extract Features with {feature_extractor.__class__.__name__}",
-                                description="Extract relevant features from sperated Sources"))   
-        features = feature_extractor(features)
+    # TODO: Maybe fix it!
+    # if feature_extractor:
+    #     if session_key:
+    #         requests.post(create_post_content(session_key=session_key, 
+    #                             name=f"Extract Features with {feature_extractor.__class__.__name__}",
+    #                             description="Extract relevant features from sperated Sources"))
+    #     features = feature_extractor(features)
 
-    if feature_reductor:
-        if session_key:
-            requests.post(create_post_content(session_key=session_key, 
-                                name=f"Reduce Features with {feature_reductor.__class__.__name__}",
-                                description="Reduce Features"))   
-        features = feature_reductor(features)
+    # if feature_reductor:
+    #     if session_key:
+    #         requests.post(create_post_content(session_key=session_key, 
+    #                             name=f"Reduce Features with {feature_reductor.__class__.__name__}",
+    #                             description="Reduce Features"))   
+    #     features = feature_reductor(features)
 
     if session_key:
         requests.post(create_post_content(session_key=session_key, 
@@ -145,16 +224,18 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
     #basic_noise_path = FILES_DIR / "basic_mic_noise_with_crickets.wav"
     #basic_noise, _ = librosa.load(basic_noise_path, sr=AmphibDataset.sample_rate)
     #noise_signal=basic_noise
-    denoiser = SpectralGate(AmphibDataset.sample_rate, stationary=True)
-    basic_preprocessor = BasicPreprocessor(AmphibDataset.sample_rate, parts_len=8, add_freq_dim=None, resample_rate=SAMPLE_RATE)
+    denoiser = SpectralGate(sample_rate=SAMPLE_RATE, stationary=True)
+    basic_preprocessor = BasicPreprocessor(sample_rate=SAMPLE_RATE, parts_len=8, add_freq_dim=None, resample_rate=SAMPLE_RATE)
     AmphibDataset.sample_rate = SAMPLE_RATE
     sound_seperator = ConvTas(num_sources=2, sample_rate=SAMPLE_RATE)
     feature_extractor = OpenL3Embedding(sample_rate=SAMPLE_RATE)
     feature_reductor = PCA(n_dims=2)
     clusterer = BGMM(n_clusters=10)
 
+    if FROG_MEAN is None or NON_FROG_MEAN is None or TRAIN:
+        dataset, kaggle_dataset, youtube_dataset, mixture_dataset = create_datasets(data_path="/media/marcel/3831-6261", denoiser=denoiser, basic_preprocessor=basic_preprocessor)
+
     if TRAIN:
-        dataset, kaggle_dataset, mixture_dataset = create_datasets(data_path="/media/marcel/3831-6261", denoiser=denoiser, basic_preprocessor=basic_preprocessor)
         # Post trains the sound seperator model
         batch_size = 4
         mixture_dataset, _ = random_split(mixture_dataset, [300, len(mixture_dataset) - 300])
@@ -162,7 +243,13 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
         sound_seperator.train(train_loader)
 
     else:
-        if x_path:
+        if FROG_MEAN is None:
+            frog_mean = mean_dataset(kaggle_dataset, SAMPLE_RATE, target_len=TARGET_LEN)
+            np.save(FROG_MEAN_PATH, frog_mean)
+        if NON_FROG_MEAN is None:
+            non_frog_mean = mean_dataset(youtube_dataset, SAMPLE_RATE, target_len=TARGET_LEN, use_n_samples=len(kaggle_dataset))
+            np.save(NON_FROG_MEAN_PATH, non_frog_mean)
+        if x_path:    
             if session_key:
                 requests.post(create_post_content(session_key=session_key, 
                                     name=f"Loading File with {SAMPLE_RATE}",
@@ -177,21 +264,25 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
                                         feature_extractor = feature_extractor, 
                                         feature_reductor = feature_reductor,
                                         denoiser = denoiser,
-                                        session_key = session_key)
+                                        session_key = session_key,
+                                        frog_mean = FROG_MEAN if FROG_MEAN is not None else frog_mean,
+                                        non_frog_mean = NON_FROG_MEAN if NON_FROG_MEAN is not None else non_frog_mean)
             save_cluster_to_file(clustered, output_dir, x_path.stem)
         else:
-            if not TRAIN:
-                dataset, kaggle_dataset, mixture_dataset = create_datasets(data_path="/media/marcel/3831-6261", denoiser=spectral_gate, basic_preprocessor=basic_preprocessor)
             output_base_dir = FILES_DIR / "clustered"
+            if (FROG_MEAN is None and NON_FROG_MEAN is None) or TRAIN:
+                dataset = AmphibDataset(parent_path="/media/marcel/3831-6261", denoiser=denoiser, basic_preprocessor=basic_preprocessor)
             dataloader = DataLoader(dataset)
             for x, path in tqdm(dataloader):
                 path = Path(path[0])
                 output_dir = output_base_dir / path.stem
                 clustered = predict_cluster(x, 
-                                            clusterer = clusterer, 
+                                            clusterer = clusterer,
                                             sound_seperator = sound_seperator, 
                                             feature_extractor = feature_extractor, 
-                                            feature_reductor = feature_reductor)
+                                            feature_reductor = feature_reductor,
+                                            frog_mean = FROG_MEAN if FROG_MEAN is not None else frog_mean,
+                                            non_frog_mean = NON_FROG_MEAN if NON_FROG_MEAN is not None else non_frog_mean)
                 save_cluster_to_file(clustered, output_dir, path.stem)
     return
 

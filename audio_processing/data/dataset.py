@@ -16,6 +16,7 @@ import os
 import torch
 import random
 from pydub import AudioSegment
+import tempfile
 
 FILES_DIR = Path(__file__).resolve().parent.parent / "files"
 FILES_DIR.mkdir(parents=True, exist_ok=True)
@@ -187,27 +188,69 @@ class KaggleAnuranSoundDataset(Dataset):
             x = np.load(cache_path.with_suffix(".npz"))["x"]
         else:
             sound = AudioSegment.from_file(path, format='m4a')
-            file = sound.export("hallo", format='wav')
-            x, _ = librosa.load(file, sr=self.resample_rate)
+            with tempfile.NamedTemporaryFile(suffix=".wav") as tmpfile:
+                sound.export(tmpfile.name, format='wav')
+                x, _ = librosa.load(tmpfile.name, sr=self.resample_rate)
 
-            np.savez_compressed(cache_path.with_suffix(".npz"), x=x)
+                np.savez_compressed(cache_path.with_suffix(".npz"), x=x)
 
-        return x
+        return torch.Tensor(x)
+
+class YouTubeNoiseDataset(Dataset):
+    def __init__(self, youtube_folder, target_len=3, sample_rate=8000):
+        self.sample_rate = sample_rate
+        self.target_len = int(sample_rate * target_len)
+        self.data = []
+        max_segment_len = 10 * 60 * sample_rate # just load 10 minutes to make it more efficent
+
+        for f in os.listdir(youtube_folder):
+            if not f.endswith('.wav'):
+                continue
+            path = os.path.join(youtube_folder, f)
+            duration = librosa.get_duration(path=path)
+            total_samples = int(duration * sample_rate)
+
+            if total_samples > max_segment_len * 2:
+                # Load first 10 minutes
+                start_segment, _ = librosa.load(path, sr=sample_rate, offset=0, duration=10*60)
+                start_segment = torch.tensor(start_segment).float()
+                # Load last 10 minutes
+                offset_last = duration - 10*60
+                end_segment, _ = librosa.load(path, sr=sample_rate, offset=offset_last, duration=10*60)
+                end_segment = torch.tensor(end_segment).float()
+                self.data.append((start_segment, end_segment))
+            else:
+                waveform, _ = librosa.load(path, sr=sample_rate)
+                waveform = torch.tensor(waveform).float()
+                self.data.append((waveform,))
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        segments = self.data[idx]
+        segment = random.choice(segments) # just random start or end segment
+        if segment.shape[-1] > self.target_len:
+            start = random.randint(0, segment.shape[-1] - self.target_len)
+            sample = segment[start:start+self.target_len]
+        else:
+            pad_size = self.target_len - segment.shape[-1]
+            sample = torch.nn.functional.pad(segment, (0, pad_size))
+        return sample
 
 class MixedAudioDataset(Dataset):
-    def __init__(self, kaggle_dataset, youtube_folder, target_len: int = 3, sample_rate=8000):
+    def __init__(self, kaggle_dataset, youtube_dataset: YouTubeNoiseDataset, target_len: int = 3, sample_rate=8000, add_prob: float = 0.8):
         self.kaggle_dataset = kaggle_dataset
-        self.youtube_folder = youtube_folder
+        self.youtube_dataset = youtube_dataset
         self.sample_rate = sample_rate
-        self.target_len = int(self.sample_rate * target_len) 
-        self.youtube_files = [f for f in os.listdir(youtube_folder) if f.endswith('.wav')]
+        self.target_len = int(self.sample_rate * target_len)
+        self.add_prob = add_prob
 
     def __len__(self):
         return len(self.kaggle_dataset)
 
     def __getitem__(self, idx):
-        kaggle_x = self.kaggle_dataset[idx]
-        kaggle_x = torch.tensor(kaggle_x).float().squeeze()
+        kaggle_x = torch.tensor(self.kaggle_dataset[idx]).float().squeeze()
         if kaggle_x.shape[-1] > self.target_len:
             start = random.randint(0, kaggle_x.shape[-1] - self.target_len)
             kaggle_x = kaggle_x[start:start + self.target_len]
@@ -215,29 +258,15 @@ class MixedAudioDataset(Dataset):
             pad_size = self.target_len - kaggle_x.shape[-1]
             kaggle_x = torch.nn.functional.pad(kaggle_x, (0, pad_size))
 
-        # just add youtube_x to 80% to make the model more robust
-        add_noise = random.random() < 0.8
-        if add_noise:
-            chosen_file = random.choice(self.youtube_files)
-            yt_waveform, _ = librosa.load(os.path.join(self.youtube_folder, chosen_file), sr=self.sample_rate)
-            yt_waveform = torch.tensor(yt_waveform).float().squeeze()
-            if yt_waveform.shape[-1] > self.target_len:
-                start = random.randint(0, yt_waveform.shape[-1] - self.target_len)
-                youtube_x = yt_waveform[start:start + self.target_len]
-            else:
-                # little bit whitenoise instead of complete silence to make it more robust
-                noise = torch.randn(self.target_len) * 0.01
-                youtube_x = noise
+        if random.random() < self.add_prob:
+            youtube_x = self.youtube_dataset[random.randint(0, len(self.youtube_dataset) - 1)].unsqueeze(0)
         else:
-            youtube_x = torch.zeros(self.target_len)
+            youtube_x = torch.randn(1, self.target_len) * 0.01
 
         kaggle_x = kaggle_x.unsqueeze(0)
-        youtube_x = youtube_x.unsqueeze(0)
         mixture = kaggle_x + youtube_x
 
         return kaggle_x, youtube_x, mixture
-
-
 
 if __name__ == "__main__":
     path = "/media/marcel/3831-6261/"
