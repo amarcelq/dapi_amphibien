@@ -28,7 +28,7 @@ class DBSCAN(ClusteringMethod):
         return self.dbscan.fit_predict(x)
 
 class BGMM(ClusteringMethod):
-    def __init__(self, n_clusters: int = 10, weight_concentration_prior: float = 0.1):
+    def __init__(self, n_clusters: int = 10, weight_concentration_prior: float = 0.01):
         # set n_components if u have a intuiation how many clusters might exists (better starting point and faster convergence)
         # bayesian cause its better for unknown num of clusters
         self.gmm = mixture.BayesianGaussianMixture(n_components=n_clusters, weight_concentration_prior=weight_concentration_prior)
