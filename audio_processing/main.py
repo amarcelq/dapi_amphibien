@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+import requests
+import asyncio
 
 app = FastAPI()
 
@@ -13,5 +15,18 @@ class StartProcessRequest(BaseModel):
 
 @app.post("/start_process")
 async def start_process(request: StartProcessRequest):
-    # Here you can add your process starting logic using request.path
-    return {"message": f"Process started for path: {request.path}"}
+    # example sending progress
+    session_key = request.session_key
+    in_file_path = request.path
+    request.post("web:8000",json={"session_key":session_key,"progress":{"status":"running","name":"Loading File","description":"Loading the uploaded file"}})
+    asyncio.create_task(process(session_key,in_file_path))
+    return {"message": f"Process started for path: {in_file_path}"}
+
+
+
+# import requests
+
+# def send_progress(task_id, progress):
+#     url = "http://django-container:8000/api/progress/update/"
+#     data = {"task_id": task_id, "progress": progress}
+#     requests.post(url, json=data)

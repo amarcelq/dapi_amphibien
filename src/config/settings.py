@@ -53,6 +53,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "config.middleware.InternalOnlyMiddleware"
 ]
 
 if not TESTING:
@@ -127,7 +128,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Sessions
 # https://docs.djangoproject.com/en/5.2/ref/settings/#sessions
-SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 # Redis
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")

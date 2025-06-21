@@ -19,11 +19,13 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 from django.conf.urls.static import static
+import config.views as views
 
 urlpatterns = [
     path("up/", include("up.urls")),
     path("", include("pages.urls")),
-    path("admin/", admin.site.urls),
+    path("internal/progress/update/", views.progress_update)
+    # path("admin/", admin.site.urls),
 ]
 
 if not settings.TESTING:

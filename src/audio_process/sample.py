@@ -34,3 +34,11 @@ def sample_cut(session:SessionBase, in_file,out_file):
     # sample sleep to make it longer
     sleep(1.2)
     return int(start_time * 1000)
+
+
+def process(session:SessionBase, in_file,out_file):
+    session["status"] = {"status":"running","name":"Loading File","description":"Loading the sound file.."}
+    session.save()
+    # start process of loading file
+    # start process of clustering/predicting
+    # start 
