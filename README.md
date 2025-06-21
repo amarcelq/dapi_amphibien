@@ -86,7 +86,12 @@ After it is done progressing, it will show the originial recording, as well as a
 idkdidkidk
 
 ## Future Steps
-...
+Here now follows a list with things that could be added to the project or which's foundations already been laid, but would be outside of the scope for this project.
+
+- User Accounts:
+  - There could be user accounts to store found clusters, share them with other useres etc. The foundation for that is already there, but wa snot necessary for this project.
+- Uploading multiple files:
+  - Right now only one file can be uplaoded and will be analyzed. In the future the user could upload multiple files which could be joined internaly to process all at once.
 
 ## License
 
