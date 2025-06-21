@@ -7,7 +7,11 @@
 <h3 align="center">Frogs</h3>
 <p align="center">
 A web application to discover different frogs in a recording
-
+<br/>
+<br/>
+<a href="#getting-started"><strong>Getting Started »</strong></a>
+<a href="#how-it-works-and-what-weve-tried"><strong>How it works »</strong></a>
+<a href="#future-steps"><strong>Future Steps »</strong></a>
 
   
 
