@@ -17,6 +17,9 @@ import torch
 import random
 from pydub import AudioSegment
 import tempfile
+import io
+import wave
+import subprocess
 
 FILES_DIR = Path(__file__).resolve().parent.parent / "files"
 FILES_DIR.mkdir(parents=True, exist_ok=True)
@@ -177,6 +180,17 @@ class KaggleAnuranSoundDataset(Dataset):
         if self.cache_dir.exists():
             shutil.rmtree(self.cache_dir)
 
+    def load_from_bytes(audio_clip: AudioSegment):
+        with io.BytesIO() as data:
+            with wave.open(data, "wb") as wavfile:
+                wavfile.setnchannels(audio_clip.channels)
+                wavfile.setsampwidth(audio_clip.sample_width)
+                wavfile.setframerate(audio_clip.frame_rate)
+                wavfile.writeframes(audio_clip.raw_data)
+            data.seek(0)
+            y, sr = librosa.load(data, sr=None, mono=False)
+        return y, sr
+
     def __len__(self):
         return len(self.file_paths)
 
@@ -187,12 +201,12 @@ class KaggleAnuranSoundDataset(Dataset):
         if cache_path.exists():
             x = np.load(cache_path.with_suffix(".npz"))["x"]
         else:
-            sound = AudioSegment.from_file(path, format='m4a')
             with tempfile.NamedTemporaryFile(suffix=".wav") as tmpfile:
-                sound.export(tmpfile.name, format='wav')
+                subprocess.run(['ffmpeg', '-y', '-i', path, tmpfile.name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 x, _ = librosa.load(tmpfile.name, sr=self.resample_rate)
+                x = librosa.util.normalize(x)
 
-                np.savez_compressed(cache_path.with_suffix(".npz"), x=x)
+            np.savez_compressed(cache_path.with_suffix(".npz"), x=x)
 
         return torch.Tensor(x)
 

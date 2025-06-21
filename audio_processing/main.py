@@ -228,7 +228,7 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
     basic_preprocessor = BasicPreprocessor(sample_rate=SAMPLE_RATE, parts_len=8, add_freq_dim=None, resample_rate=SAMPLE_RATE)
     AmphibDataset.sample_rate = SAMPLE_RATE
     sound_seperator = ConvTas(num_sources=2, sample_rate=SAMPLE_RATE)
-    feature_extractor = OpenL3Embedding(sample_rate=SAMPLE_RATE)
+    feature_extractor = None#OpenL3Embedding(sample_rate=SAMPLE_RATE)
     feature_reductor = PCA(n_dims=2)
     clusterer = BGMM(n_clusters=10)
 
@@ -249,6 +249,7 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
         if NON_FROG_MEAN is None:
             non_frog_mean = mean_dataset(youtube_dataset, SAMPLE_RATE, target_len=TARGET_LEN, use_n_samples=len(kaggle_dataset))
             np.save(NON_FROG_MEAN_PATH, non_frog_mean)
+
         if x_path:    
             if session_key:
                 requests.post(create_post_content(session_key=session_key, 
