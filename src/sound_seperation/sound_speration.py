@@ -10,6 +10,7 @@ from torchaudio.models import ConvTasNet
 from tqdm import tqdm
 from asteroid.losses import PITLossWrapper
 from asteroid.losses import pairwise_neg_sisdr
+import torchaudio
 
 WEIGHTS_DIR = FILES_DIR / "weights"
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -45,7 +46,7 @@ class ICA(SoundSperationMethod):
         return self.__call__(x)
 
 class ConvTas(SoundSperationMethod):
-    def __init__(self, num_sources = 2, sample_rate: int = 8000, pretrained_weights_path=WEIGHTS_DIR / "conv_tasnet_base_libri2mix.pt"):#"frog_convtas.pt"):
+    def __init__(self, num_sources = 2, sample_rate: int = 8000, pretrained_weights_path=WEIGHTS_DIR / "frog_convtas.pt"):
         self.pre_trained_weights = pretrained_weights_path
 
         self.model = ConvTasNet(
@@ -87,12 +88,17 @@ class ConvTas(SoundSperationMethod):
 
     def pred(self, x: torch.Tensor) -> torch.Tensor:
         self.model.eval()
+        norm = torch.norm(x,float('inf'))
         with torch.no_grad():
-            return self.model(x)
+            est_sources = self.model(x)
+            est_sources = est_sources.detach()
+            max_vals = torch.amax(torch.abs(est_sources), dim=-1, keepdim=True)
+            normalized = est_sources * norm / max_vals
+        return normalized
 
 class FICA(SoundSperationMethod):
     def __init__(self, num_sources=3):
-        self.ica = FastICA(num_sources=3, whiten="arbitrary-variance")
+        self.ica = FastICA(num_sources=num_sources, whiten="arbitrary-variance")
 
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         return self.ica.fit_transform(x)     

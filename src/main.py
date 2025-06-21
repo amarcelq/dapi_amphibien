@@ -19,6 +19,7 @@ import numpy as np
 import openl3
 import kagglehub
 import torch
+from torch.utils.data import random_split
 
 TRAIN: bool = False
 SAMPLE_RATE: int = 8000
@@ -49,9 +50,9 @@ def predict_cluster(x: np.ndarray,
     features: np.ndarray | torch.Tensor = x
     if sound_sperator:
         _seperated = sound_sperator.pred(features)
-        # TODO: Check if _spererated is really from same range as orignial x
         # TODO: Implement this function!
-        x = _seperated[0, 0, :44000].reshape(-1, 1)#get_frog_cluster(_seperated)
+        x = _seperated[0, 1, :]#.reshape(-1, 1)        
+        sf.write(FILES_DIR / "clustered" / "hallo.wav", x, SAMPLE_RATE)
         features = x
 
     if feature_extractior:
@@ -87,22 +88,25 @@ def main(x_path: Optional[Path | str] = None) -> None:
     feature_reductor = PCA(n_dims=2)
     clusterer = BGMM(n_clusters=5)
 
-    if not x_path:
+    if TRAIN:
         dataset, kaggle_dataset, mixture_dataset = create_datasets(data_path="/media/marcel/3831-6261", denoiser=spectral_gate, basic_preprocessor=basic_preprocessor)
-        if TRAIN:
-            # Post trains the sound seperator model
-            batch_size = 4
-            train_loader = DataLoader(mixture_dataset, batch_size=batch_size)
-            sound_seperator.train(train_loader)
+        # Post trains the sound seperator model
+        batch_size = 4
+        mixture_dataset, _ = random_split(mixture_dataset, [300, len(mixture_dataset) - 300])
+        train_loader = DataLoader(mixture_dataset, batch_size=batch_size)
+        sound_seperator.train(train_loader)
+
     else:
         if x_path:
             x, _ = librosa.load(x_path, sr=AmphibDataset.sample_rate)
             x = torch.Tensor(x).unsqueeze(0).unsqueeze(1)
             x_path = Path(x_path) if isinstance(x_path, str) else x_path
-            output_dir = x_path.stem
+            output_dir = FILES_DIR / "clustered" #x_path.stem
             clustered = predict_cluster(x, clusterer, sound_seperator)
             save_cluster_to_file(clustered, output_dir, x_path.stem)
         else:
+            if not TRAIN:
+                dataset, kaggle_dataset, mixture_dataset = create_datasets(data_path="/media/marcel/3831-6261", denoiser=spectral_gate, basic_preprocessor=basic_preprocessor)
             output_base_dir = FILES_DIR / "clustered"
             dataloader = DataLoader(dataset)
             for x, path in tqdm(dataloader):
