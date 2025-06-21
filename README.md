@@ -77,9 +77,9 @@ In some cases it could be necessary to install the dependencies manually (e.g. w
 ## Usage
 
 When the page is running, drag n' drop a sound file (`.wav`) onto the green box. The site will begin processing it showing a progress bar. 
-[Process Image](docs/pics/progress.png)
+![Process Image](docs/pics/progress.png)
 After it is done progressing, it will show the originial recording, as well as all found clusters of sound. Those should be frogs, but it can also happen that other sounds find their way there. Just Click on the wave forms to listen to a sample of them. To see all samples of one cluster, exapnd the tile by clicking on "Show more". 
-[Tiles Image]()
+![Tiles Image]()
 
 ## How it works and what we've tried
 idkdidkidk
