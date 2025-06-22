@@ -24,6 +24,7 @@ from torch.utils.data import random_split
 import os
 import requests
 from scipy.spatial.distance import euclidean
+from collections import defaultdict
 
 TRAIN: bool = False
 SAMPLE_RATE: int = 8000
@@ -78,7 +79,8 @@ def create_datasets(data_path: Sequence[str] | Sequence[Path], denoiser: Optiona
     youtube_dataset = YouTubeNoiseDataset(
         youtube_folder=youtube_sounds_path,
         target_len=TARGET_LEN,
-        sample_rate=AmphibDataset.sample_rate
+        sample_rate=AmphibDataset.sample_rate,
+        generate_n_samples=len(kaggle_dataset)
     )
 
     mixture_dataset = MixedAudioDataset(
@@ -93,20 +95,20 @@ def create_datasets(data_path: Sequence[str] | Sequence[Path], denoiser: Optiona
 def mean_dataset(dataset, sample_rate: int, target_len: int = 5, use_n_samples: Optional[int] = None) -> np.ndarray:
     target_len = int(sample_rate * target_len)
     total_sum = torch.zeros(target_len)
-    total_count = 0
 
-    for i, x in enumerate(dataset):
-        if use_n_samples is not None and i >= use_n_samples:
-            break
+    use_n_samples = use_n_samples if use_n_samples is not None else len(dataset)
+
+    for i in range(use_n_samples):
+        x = dataset[i]
         x = x[:target_len]
         pad_width = target_len - x.shape[0]
         if pad_width > 0:
-            pad_value = 10 ** (SILENCE_THRESHOLD / 20)
+            pad_value = 10 ** (-SILENCE_THRESHOLD / 20)            
             x = torch.nn.functional.pad(x, (0, pad_width), value=pad_value)
         total_sum += x
-        total_count += 1
 
-    return (total_sum / total_count).numpy()
+    mean = total_sum / use_n_samples
+    return mean.numpy()
 
 def is_frog_cluster(x: torch.Tensor | np.ndarray,
                     frog_mean: np.ndarray,
@@ -148,43 +150,44 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
                             name=f"Seperate Sources with {sound_seperator.__class__.__name__}",
                             description="Seperate Sources"))
         
-    frogs = list()
+    frogs: list[np.ndarray] = list()
     stack = [features]
     i = 1
+
     while stack:
         if session_key:
             requests.post(create_post_content(session_key=session_key, 
                                 name=f"Sound Seperation with {sound_seperator.__class__.__name__}",
                                 description=f"Sound Seperation Iteration: {i}"))  
         current = stack.pop()
+        current: torch.Tensor | np.ndarray = torch.Tensor(current) if isinstance(x, np.ndarray) else current
         current = current.reshape(1, 1, -1)
         _separated = sound_seperator.pred(current)
 
-        source_1 = _separated[0, 0, :].numpy()
-        source_2 = _separated[0, 1, :].numpy()
-
+        source_1 = _separated[0, 0, :]
+        source_2 = _separated[0, 1, :]
         for source in (source_1, source_2):
-            i += 1
-            print(i)
             if is_frog_cluster(source, 
                                frog_mean, 
                                non_frog_mean, 
                                sample_rate=SAMPLE_RATE, 
-                               target_len=TARGET_LEN) and (len(frogs) == 0 or not np.allclose(frogs[-1], source, atol=1e-3)):
+                               target_len=TARGET_LEN) and (len(frogs) == 0 or not np.allclose(frogs[-1], source, atol=1e-2)):
+                    if denoiser:
+                        source = denoiser(source)
                     frogs.append(source)
                     stack.append(source)
-    print(frogs)
-    exit(0)
-
-    if denoiser:
-        if session_key:
-            requests.post(create_post_content(session_key=session_key, 
-                                name=f"Denoise Seperated Sources with {denoiser.__class__.__name__}",
-                                description="Denoise seperated Sources"))    
-        x = denoiser(x)
-        features = x
-
+        if i == 8:
+            break
+        i += 1
     # TODO: Maybe fix it!
+    # if denoiser:
+    #     if session_key:
+    #         requests.post(create_post_content(session_key=session_key, 
+    #                             name=f"Denoise Seperated Sources with {denoiser.__class__.__name__}",
+    #                             description="Denoise seperated Sources"))    
+    #     x = denoiser(x)
+    #     features = x
+
     # if feature_extractor:
     #     if session_key:
     #         requests.post(create_post_content(session_key=session_key, 
@@ -199,26 +202,38 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
     #                             description="Reduce Features"))   
     #     features = feature_reductor(features)
 
-    if session_key:
-        requests.post(create_post_content(session_key=session_key, 
-                            name=f"Create Clusters with {clusterer.__class__.__name__}",
-                            description="Create Clusters"))  
-    labels = clusterer(features.reshape(-1, 1))
+    # if session_key:
+    #     requests.post(create_post_content(session_key=session_key, 
+    #                         name=f"Create Clusters with {clusterer.__class__.__name__}",
+    #                         description="Create Clusters"))  
+    # labels = clusterer(features.reshape(-1, 1))
 
-    unique_labels = set(labels)
-    clustered: dict = {label: [] for label in unique_labels}
-    for idx, label in enumerate(labels):
-        splitted = librosa.effects.split(x[idx], top_db=SILENCE_THRESHOLD)
-        clustered[label].append(splitted)
+    # unique_labels = set(labels)
+    # clustered: dict = {label: [] for label in unique_labels}
+    splitted_frogs = list()
+    for frog in frogs:
+        indizes = librosa.effects.split(frog, top_db=SILENCE_THRESHOLD)
+        splitted = list()
+        for i in indizes:
+            s, e = i
+            splitted.append(frog[s:e])
+        splitted_frogs.append(splitted)
 
-    return clustered
+    return splitted_frogs
 
-def save_cluster_to_file(clustered: dict, output_dir: Path | str, file_name: str | Path):
+def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str, file_name: Optional[str | Path] = None):
     output_dir = Path(output_dir) if isinstance(output_dir, str) else output_dir
-    for cluster, data in clustered.items():
-        for occurence, splitted_data in enumerate(data):
-            output_file = os.path.join(output_dir, f"{file_name}_{occurence}_{cluster}.wav")
-            sf.write(output_file, splitted_data, SAMPLE_RATE)
+    for i, splitted_frog in enumerate(splitted_frogs):
+        splitted_frog_dir = output_dir / str(i)
+        splitted_frog_dir.mkdir(parents=True, exist_ok=True)
+        for i, occurence in enumerate(splitted_frog):
+            print(occurence)
+            sf.write(splitted_frog_dir / f"{i}.wav", occurence, SAMPLE_RATE, format="wav")
+
+    # for cluster, data in clustered.items():
+    #     for occurence, splitted_data in enumerate(data):
+    #         output_file = os.path.join(output_dir, f"{file_name}_{occurence}_{cluster}.wav")
+    #         sf.write(output_file, splitted_data, SAMPLE_RATE)
 
 def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None) -> None:
     #basic_noise_path = FILES_DIR / "basic_mic_noise_with_crickets.wav"
@@ -244,11 +259,14 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
 
     else:
         if FROG_MEAN is None:
-            frog_mean = mean_dataset(kaggle_dataset, SAMPLE_RATE, target_len=TARGET_LEN)
+            #frog_mean = mean_dataset(kaggle_dataset, SAMPLE_RATE, target_len=TARGET_LEN)
+            frog_mean, _ = librosa.load(FILES_DIR / "frog_mean.wav", sr=SAMPLE_RATE, duration=TARGET_LEN)
+            frog_mean = denoiser(frog_mean)
             np.save(FROG_MEAN_PATH, frog_mean)
         if NON_FROG_MEAN is None:
-            non_frog_mean = mean_dataset(youtube_dataset, SAMPLE_RATE, target_len=TARGET_LEN, use_n_samples=len(kaggle_dataset))
+            non_frog_mean = mean_dataset(youtube_dataset, SAMPLE_RATE, target_len=TARGET_LEN)
             np.save(NON_FROG_MEAN_PATH, non_frog_mean)
+
 
         if x_path:    
             if session_key:
