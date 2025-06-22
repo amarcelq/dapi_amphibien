@@ -84,7 +84,27 @@ def result(request):
             # }
         ],
     }
-
+    if request.session.get("result"):
+        res = request.session["result"]
+    else: 
+        # for now default if result not given
+        res = {
+        "main_audio": {"name": "Original", "url": f"/media/sessions/{session_key}/upload.wav"}, # the main, original uploaded audio track from the user
+        "alternative_audio": [{"name": "Denoised", "url": ""}], # alternative tracks that were created during processing (e.g. a denoised Version). They should all have the same length and SampleRate
+        # All found unique samples
+        "samples": [
+            {
+                "id": "id-to-be-implemented", # session-unique id for this sample type
+                "name": "#1", # Each sample has a displayed name
+                "snippets": [{"url": f"/media/sessions/{session_key}/cut.wav", "start": 10000, "duration": 5000}], # and snippets, which each point to a unique snippet url. The start and end time in ms is relative to the original audio track. The first snippet will be displayed in big
+            },
+            # {
+            #     "id": "id-to-be-implemented", # session-unique id for this sample type
+            #     "name": "#2", # Each sample has a displayed name
+            #     "snippets": [{"url": "", "start": 3500, "duration": 1000}], # and snippets, which each point to a unique snippet url. The start and end time in ms is relative to the original audio track
+            # }
+        ],
+    }
     return JsonResponse(res)
 
 

@@ -1,9 +1,9 @@
 # use https://docs.astral.sh/uv/guides/integration/docker/#available-images
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
+    build-essential ffmpeg libsm6 libxext6 libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy application code
@@ -12,7 +12,9 @@ WORKDIR /app
 
 RUN uv sync --locked
 ENV PATH="/app/.venv/bin:$PATH"
+RUN uv add tensorflow-cpu-aws
 
+# RUN uv pip install tensorflow-cpu-aw
 # # Expose FastAPI port
 # EXPOSE 8000
 

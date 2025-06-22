@@ -24,9 +24,9 @@ def progress_finish(request):
         data = json.loads(request.body)
 
         session_key = data.get("session_key")
-        progress = data.get("load")
+        progress = data.get("result")
         session:SessionBase = SessionStore(session_key=session_key)
-        session["load"] = progress #{"status":"done","name":"Finished","description":""}
+        session["result"] = progress #{"status":"done","name":"Finished","description":""}
         session.save()
         return JsonResponse({"status": "ok"})
     return JsonResponse({"error": "invalid method"}, status=405)
