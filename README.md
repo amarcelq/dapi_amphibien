@@ -86,6 +86,24 @@ After it is done progressing, it will show the originial recording, as well as a
 ![Tiles Image]()
 
 ## How It Works
+### Frontend + Backend 
+The whole application is dockerized, enabling easy deploying and starting. It uses the following containers:
+- web
+  This Container contains the Django application and thus manages all requests and request handling. It invokes the audio backend, as well as kicks of the tasks in Celery.
+- worker
+  This is the Celery worker, that handles the background tasks and processes for Django
+- audio
+  In this container the audio backends runs behind a FastAPI instance on uvicorn. This async server allows the processing of the audio data. (Could be also delegated to a dedicated task queue, but that wasnt necesarry for this scope)
+- Redis
+  - This is the message broker for Celery
+- Postgres DB
+  - This is used by Django to manage Sessions. In the future it can be easily used to store users and their info.
+- app, asset, js & css
+  - Those are containers used for building or during developement. They build & bundle the JavaScript and CSS files, as well as manage the python dependencies for Django.
+
+As there is no login required right now, the identification of users is handled via (anonymous) sessions. When a user uploads a file, it is stored on a `media` volume in the docker compose stack, and the audio processing backend is called via a FastAPI route. The client can get progress updates via a seperate route. Once finished, the client gets the resulting `.wav`-file paths and the frontend renders the corresponding tiles.
+
+### Audio Processing Backend
 > Note: This program is designed to function with or without the website interface. Refer to `audio_processing/main.py` for core logic. This README focuses on the website implementation.
 1. Receive the input frog mixture from the web interface.  
 2. Apply denoising and optional preprocessing steps such as trimming and converting to mono.  
@@ -111,6 +129,43 @@ Here now follows a list with things that could be added to the project or which'
 - Uploading multiple files:
   - Right now only one file can be uplaoded and will be analyzed. In the future the user could upload multiple files which could be joined internaly to process all at once.
 - A viable strategy involves training ConvTasNet to distinguish between froggy and non-froggy sounds, as detailed in the `How it works` section and the `audio_processing/data/utils.py` module. Subsequently, features can be extracted—potentially using OpenL3—and dimensionality reduction applied, for instance via PCA, followed by clustering. Although mapping from the reduced feature space back to the original audio files presents significant challenges, this approach may yield valuable insights. The principal limitation lies in ConvTasNet’s computational demands, exacerbated by the high dimensionality of audio data, which exceeds the available processing resources.
+- Task Queue:
+  - Using a dedicated Task queue for the audio backend would be beneficial for better scalability and performance. 
+
+## Zeitmanagement
+300h Gesamt:
+
+- Aufstellung des Erwartungshorizontes des Projektes mit Projektverantwortlichen und Domänenexperten (Frau Vogl, Soundexperte aus Mecklenburg, Bundnaturschutz Experten) 10h
+
+- Mit AudioMoth beschäftigen 5h
+  - Mikrofone initial in Betriebnahme (Firmware flashen, Zeit einstellen, etc.)
+  - Relevante Frequenzen/Sample Rate ermitteln (Welche Amphibien sind vor Ort und benötigen welche Frequenz?) 
+  - => Ging schneller, da alles gut Dokumentiert war und keine technischen Probleme aufgetreten sind
+- Datensammeln 25h
+  - Aufstellgebiets-Auswahl 5h
+  - Datensammeln (Hin- und Rückweg, Mikrofone an richtiger Stelle positionieren und in Betrieb nehmen, an mehreren Orten zu verschiedenen Zeitpunkten) 20h
+  - => Das Einsammeln der AudioMoths hat länger gedauer
+- Interface (website) erstellen 105h
+  - Generell Aufsetzen 10h
+  - Frontend/Backend 70h
+  - Audiointerface 15h
+  - => Hat etwas länger gedauert da die bisher geplante Audiinterface Bibliothek ([Howler.js](https://howlerjs.com)) keine Waveforms unterstützen kann. Stattdessen wurde [Wavesurfer.js](https://wavesurfer.xyz) verwendet. 
+  - Deployen 10h
+- Datenvorverarbeitung 100h
+  - Noise (Was sind Störgeräusche) 20h
+  - Audio Source/Signal Seperation, Blind Source Separation 20h
+  - Acoustic Event Detection 20h
+  - Auswahl relevanter Frequenzen 10h
+  - etc 30h
+- Klassifizierung/Clustering 70h
+  - Acoustic Event Classification 30h
+  - Clustering 30h
+  - etc 10h
+
+
+Hauptsächlich wurden die ML Prozesse gegenüber der geplanten Prozesse abgeändert, was zu zeitlichen Änderungen führte. Dies sind auch die einzigen Architekturunterschiede zwischen Planung und Ausführung (da auch eine konkrete Vorgehensweise gegeben der Aufgabenstellung nicht planbar war).
+
+
 ## License
 
 Distributed under the MIT License. See [MIT License](https://opensource.org/licenses/MIT) for more information.
