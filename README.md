@@ -73,7 +73,11 @@ In some cases it could be necessary to install the dependencies manually (e.g. w
    ```sh
    docker compose up -d --build
    ```
-4. Now everything should be up and running and you should see the application at `localhost:8000`!
+4. If its the first time starting it, you have to initialise the Database and Django schemas. Run the following commands:
+   ```sh
+   ./run manage makemigrations
+   ./run manage migrate
+5. Now everything should be up and running and you should see the application at `localhost:8000`!
 ## Usage
 
 When the page is running, drag n' drop a sound file (`.wav`) onto the green box. The site will begin processing it showing a progress bar. 
