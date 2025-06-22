@@ -41,7 +41,26 @@ class ICA(SoundSperationMethod):
         return self.__call__(x)
 
 class ConvTas(SoundSperationMethod):
+    """
+    ConvTas source separation model specialized for frog and non-frog audio separation.
+
+    Attributes:
+        pre_trained_weights (Path): Path to pretrained model weights.
+        model (ConvTasNet): Underlying ConvTasNet architecture instance.
+
+    Methods:
+        __call__(x: torch.Tensor) -> torch.Tensor:
+            Perform source separation inference on input audio tensor.
+
+        train(train_loader, epochs=20) -> None:
+            Train the ConvTasNet model on paired frog/non-frog mixtures with permutation-invariant loss.
+            Saves updated weights to disk.
+
+        pred(x: torch.Tensor) -> torch.Tensor:
+            Evaluate the model in inference mode, returning normalized separated sources.
+    """
     def __init__(self, num_sources: int = 2, sample_rate: int = 8000, pretrained_weights_path=WEIGHTS_DIR / "frog_convtas.pt"):
+
         self.pre_trained_weights = pretrained_weights_path
 
         self.model = ConvTasNet(
@@ -87,6 +106,7 @@ class ConvTas(SoundSperationMethod):
         with torch.no_grad():
             est_sources = self.model(x)
             est_sources = est_sources.detach()
+            # Normalize the model output to the orignal sound range
             max_vals = torch.amax(torch.abs(est_sources), dim=-1, keepdim=True)
             normalized = est_sources * norm / max_vals
         return normalized

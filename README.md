@@ -112,7 +112,7 @@ As there is no login required right now, the identification of users is handled 
 ## Problems and Solutions
 - **Environmental and stationary noise**: Microphones capture both stationary and ambient noise (e.g., crickets, white noise). Use a **Spectral Gate** for denoising—this produced the best results in our tests. Provide a representative noise sample to the denoiser (see `audio_processing/preprocessing/denoise.py`).
 - **Training a custom separator is not feasible**: Due to hardware constraints, use a **pretrained Conv-TasNet**. Alternatives like MixIT (Google), Wave-U-Net, NMF, and FastICA were tested; MixIT required excessive implementation effort, and the others underperformed relative to Conv-TasNet.
-- **Conv-TasNet training is too computationally expensive**: Mitigate this by splitting audio files into **8-second segments** and using a **batch size of 4**.
+- **Conv-TasNet training is too computationally expensive**: Mitigate this by splitting audio files into **8-second segments**, **300 random segments per epoch**  and using a **batch size of 4**.
 - **Conv-TasNet is designed for two-speaker separation**: Apply **breadth-first search (BFS)** to recursively split outputs until a maximum depth is reached (see `How it works` for implementation details).
 - **Inconsistent output volume**: Normalize all resulting audio snippets to a **consistent LUFS level**.
 
@@ -128,6 +128,7 @@ Here now follows a list with things that could be added to the project or which'
   - Using a dedicated Task queue for the audio backend would be beneficial for better scalability and performance. 
 
 ## Zeitmanagement
+
 300h Gesamt:
 
 - Aufstellung des Erwartungshorizontes des Projektes mit Projektverantwortlichen und Domänenexperten (Frau Vogl, Soundexperte aus Mecklenburg, Bundnaturschutz Experten) 10h
@@ -144,29 +145,24 @@ Here now follows a list with things that could be added to the project or which'
   - Generell Aufsetzen 10h
   - Frontend/Backend 70h
   - Audiointerface 15h
-  - => Hat etwas länger gedauert da die bisher geplante Audiinterface Bibliothek ([Howler.js](https://howlerjs.com)) keine Waveforms unterstützen kann. Stattdessen wurde [Wavesurfer.js](https://wavesurfer.xyz) verwendet. 
+  - => Hat etwas länger gedauert da die bisher geplante Audiointerface Bibliothek ([Howler.js](https://howlerjs.com)) keine Waveforms unterstützen kann. Stattdessen wurde [Wavesurfer.js](https://wavesurfer.xyz) verwendet. 
   - Deployen 10h
-- Datenvorverarbeitung 100h
-  - Noise (Was sind Störgeräusche) 20h
-  - Audio Source/Signal Seperation, Blind Source Separation 20h
-  - Acoustic Event Detection 20h
-  - Auswahl relevanter Frequenzen 10h
-  - etc 30h
-- Klassifizierung/Clustering 70h
-  - Acoustic Event Classification 30h
-  - Clustering 30h
-  - etc 10h
+- Audioverarbeitung 170h
+  - Denoising 20h
+  - Basic Preprocessing 10h
+  - Sound Seperation 100h => hat deutlich länger gedauert als ursprünglich geplant, da es sich als weit anspruchsvoller herausstellte
+  - Feature Extraktion, Feature Reduktion und Clustering 40h (wird im momentanen workflow nicht benutzt)
 
-Hauptsächlich wurden die Audioverarbeitungs-Prozesse gegenüber der geplanten Prozesse abgeändert, was zu zeitlichen Änderungen führte. Dies sind auch die einzigen Architekturunterschiede zwischen Planung und Ausführung. Dies war auch zu erwarten, da es sich in großen Teilen um ein Froschungsprojekt handelt, welches
-laut Definition darauf abzielt.
+Note: Hauptsächlich wurden die Audioverarbeitungs-Prozesse gegenüber der geplanten Prozesse abgeändert, was zu zeitlichen Änderungen führte. Dies sind auch die einzigen Architekturunterschiede zwischen Planung und Ausführung. Dies war auch zu erwarten, da es sich in großen Teilen um ein Froschungsprojekt handelt, welches laut Definition darauf abzielt neues auszuprobieren und ggf. Anpassungen am Vorgehen zu erreichen.
 
 ## License
 
 Distributed under the MIT License. See [MIT License](https://opensource.org/licenses/MIT) for more information.
 ## Acknowledgments
-
 Here are some ressources we used to create this project. Make sure to check them out!
 
 - [makeread.me](https://github.com/ShaanCoding/ReadME-Generator)
 - [othneildrew](https://github.com/othneildrew/Best-README-Template)
 - [Django Docker Template](https://github.com/nickjj/docker-django-example)
+- [ConvTas] (https://arxiv.org/abs/1809.07454)
+- [OpenL3] ([Look, Listen and Learn More: Design Choices for Deep Audio Embeddings](https://www.justinsalamon.com/uploads/4/3/9/4/4394963/cramer_looklistenlearnmore_icassp_2019.pdf)) and ([Look, Listen and Learn](https://openaccess.thecvf.comcontent_ICCV_2017/papers/Arandjelovic_Look_Listen_and_ICCV_2017_paper.pdf))

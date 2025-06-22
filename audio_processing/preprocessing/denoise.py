@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 from torch.utils.data import DataLoader
 # from src.data.dataset import AmphibDataset, sound_to_spectogramm, FILES_DIR
-from pathlib import Path
 from typing import Optional, List, Tuple
 import noisereduce as nr
-import soundfile as sf
 import numpy as np
 from scipy.signal import welch
 import matplotlib.pyplot as plt
@@ -139,6 +137,7 @@ class Wiener(DenoiseMethod):
 
 if __name__ == "__main__":
     pass
+    # Testing, which method works the best
     # basic_noise_path = FILES_DIR / "basic_noise.wav"
     # basic_noise, _ = librosa.load(basic_noise_path, sr=AmphibDataset.sample_rate)
     # analyse_noise(basic_noise, sample_rate=AmphibDataset.sample_rate, title="basic_noise", plot=True)
@@ -165,19 +164,3 @@ if __name__ == "__main__":
     # analyse_noise(x_wiener, sample_rate=AmphibDataset.sample_rate, title="243B1F02648802FC_20250503_044100_denoised_sub.WAV", plot=True)
 
     # utils.plot_sound_waves([froggy, x_spectral_gate], in_one_ax=True)
-
-    # path = FILES / "frog_sounds"
-    # dataset = AmphibDataset(path)
-    # batch_size = 64
-    # dataloader = DataLoader(dataset, batch_size=1)
-    # for X_batch, paths_batch in dataloader:
-    #         for x, path in zip(X_batch, paths_batch):
-    #             x = x.numpy()
-    #             filename = Path(path).stem
-    #             img_path = FILES_DIR / "spectogramms" / (filename + ".png")
-    #             img = sound_to_spectogramm(x,
-    #                         model_optimized=False,
-    #                         show=True)
-    #             analyse_noise(x, sample_rate=AmphibDataset.sample_rate, title=filename, plot=True)
-    #             x_denoised = denoise([(x, path)], sample_rate=AmphibDataset.sample_rate)[0][0]
-    #             analyse_noise(x_denoised, sample_rate=AmphibDataset.sample_rate, title=f"{filename}_denoised", plot=True)

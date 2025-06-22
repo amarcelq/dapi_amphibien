@@ -15,16 +15,16 @@ import shutil
 import os
 import torch
 import random
-from pydub import AudioSegment
 import tempfile
-import io
-import wave
 import subprocess
 
 FILES_DIR = Path(__file__).resolve().parent.parent / "files"
 FILES_DIR.mkdir(parents=True, exist_ok=True)
 
 class AmphibDataset(Dataset):
+    """
+    Loads and preprocesses local WAV files of amphibian sounds, applies optional denoising and caching for efficiency.
+    """
     sample_rate: int = 192000
 
     def __init__(self,
@@ -160,6 +160,10 @@ def load_image(path: str | Path, output_size: Optional[Tuple[int, int]] = None):
     return img
 
 class KaggleAnuranSoundDataset(Dataset):
+    """
+    Loads frog/toad audio files from the Kaggle anuran dataset, converts from .m4a to WAV format with caching.
+
+    """
     def __init__(self, parent_dir, resample_rate: int = 8000):
         self.parent_dir = parent_dir
         self.resample_rate = resample_rate
@@ -199,6 +203,9 @@ class KaggleAnuranSoundDataset(Dataset):
         return torch.Tensor(x)
 
 class YouTubeNoiseDataset(Dataset):
+    """
+    Loads long ambient noise segments from YouTube sound recordings, extracts random fixed-length samples for background noise modeling.
+    """
     def __init__(self, youtube_folder, target_len=3, sample_rate=8000, generate_n_samples=1500):
         self.sample_rate = sample_rate
         self.target_len = int(sample_rate * target_len)
@@ -231,17 +238,23 @@ class YouTubeNoiseDataset(Dataset):
         return self.generate_n_samples
 
     def __getitem__(self, _):
-        segments = random.choice(self.data)
-        segment = random.choice(segments)  # starting or ending 10 minutes
+        """Returns a random sample from """
+        segments = random.choice(self.data) # choose random file
+        segment = random.choice(segments)  # chose either starting or ending 10 minutes
         if segment.shape[-1] > self.target_len:
             start = random.randint(0, segment.shape[-1] - self.target_len)
             sample = segment[start:start+self.target_len]
         else:
+            # pads with almost silence if the sequence is shorter than the target size
+            pad_value = 10 ** (-35 / 20)        
             pad_size = self.target_len - segment.shape[-1]
-            sample = torch.nn.functional.pad(segment, (0, pad_size))
+            sample = torch.nn.functional.pad(segment, (pad_value, pad_size))
         return sample
 
 class MixedAudioDataset(Dataset):
+    """
+    Generates mixtures by combining frog sounds from Kaggle dataset with YouTube background noises for training source separation.
+    """
     def __init__(self, kaggle_dataset, youtube_dataset: YouTubeNoiseDataset, target_len: int = 3, sample_rate=8000, add_prob: float = 0.8):
         self.kaggle_dataset = kaggle_dataset
         self.youtube_dataset = youtube_dataset

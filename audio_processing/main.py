@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 from fastapi import FastAPI, BackgroundTasks
-import tensorflow as tf
 from pydantic import BaseModel
 import asyncio
 from data.dataset import AmphibDataset, FILES_DIR, KaggleAnuranSoundDataset, MixedAudioDataset, YouTubeNoiseDataset
@@ -22,7 +21,6 @@ import numpy as np
 import kagglehub
 import torch
 from torch.utils.data import random_split
-import os
 import requests
 from scipy.spatial.distance import euclidean
 from dataclasses import dataclass
@@ -30,12 +28,16 @@ from collections import deque
 
 TRAIN: bool = False
 WEB_USE: bool = False
+# Set it to 8000 since ConvTas is pretrained on 8000
 SAMPLE_RATE: int = 8000
+# We use 35 db as silence to create more realistic since in real world it will never be completly silent
 SILENCE_THRESHOLD: int = 35
+# Since it might be extensive to calc the mean we dump it into a file
 FROG_MEAN_PATH: Path = FILES_DIR / "frog_mean.npy"
 FROG_MEAN: Optional[np.ndarray] = np.load(FROG_MEAN_PATH) if FROG_MEAN_PATH.exists() else None
 NON_FROG_MEAN_PATH: Path = FILES_DIR / "no_frog_mean.npy"
 NON_FROG_MEAN: Optional[np.ndarray] = np.load(NON_FROG_MEAN_PATH) if NON_FROG_MEAN_PATH.exists() else None
+# Is the length of a sound segment in seconds we use to calc things like the mean and compare the files later on against it to find the froggy splits
 TARGET_LEN: int = 5
 
 app = FastAPI()
@@ -98,6 +100,23 @@ def create_web_return(samples: Sequence, in_path: str):
     return res
 
 def create_datasets(data_path: Sequence[str] | Sequence[Path], denoiser: Optional[DenoiseMethod] = None, basic_preprocessor: Optional[BasicPreprocessor] = None):
+    """
+    Create all datasets required for training or inference.
+
+    Initializes and returns the following:
+    - `dataset`: Custom user dataset loaded from provided directory or file list. Can include field recordings or other external samples.
+    - `kaggle_dataset`: Clean frog vocalizations from the Anuran dataset downloaded via KaggleHub. Serves as the positive class reference.
+    - `youtube_dataset`: Environmental and non-frog noise recordings sourced from YouTube, used as negative class or background content.
+    - `mixture_dataset`: Synthetic mixtures of frog and non-frog signals used to train source separation models. Each sample contains overlapping frog and noise audio.
+
+    Args:
+        data_path (Sequence[str] | Sequence[Path]): File paths or a parent directory path for user-provided audio.
+        denoiser (Optional[DenoiseMethod]): Optional denoising method applied during loading.
+        basic_preprocessor (Optional[BasicPreprocessor]): Optional preprocessing applied during dataset creation.
+
+    Returns:
+        dataset, kaggle_dataset, youtube_dataset, mixture_dataset
+    """
     if isinstance(data_path, (str, Path)):
         dataset = AmphibDataset(parent_path=data_path, basic_preprocessor=basic_preprocessor, denoiser=denoiser)
     else:
@@ -127,6 +146,18 @@ def create_datasets(data_path: Sequence[str] | Sequence[Path], denoiser: Optiona
     return dataset, kaggle_dataset, youtube_dataset, mixture_dataset
 
 def mean_dataset(dataset, sample_rate: int, target_len: int = 5, use_n_samples: Optional[int] = None) -> np.ndarray:
+    """
+    Compute the mean waveform across samples in a dataset.
+
+    Args:
+        dataset: Sequence of 1D tensors representing audio samples.
+        sample_rate (int): Sample rate in Hz.
+        target_len (int, optional): Target duration in seconds. Defaults to 5.
+        use_n_samples (int, optional): Number of samples to average. Defaults to full dataset.
+
+    Returns:
+        np.ndarray: Mean waveform of shape (sample_rate * target_len,).
+    """
     target_len = int(sample_rate * target_len)
     total_sum = torch.zeros(target_len)
 
@@ -149,7 +180,19 @@ def is_frog_cluster(x: torch.Tensor | np.ndarray,
                     non_frog_mean: np.ndarray,
                     sample_rate: int,
                     target_len: int) -> bool:
-    
+    """
+    Determine if a signal more closely resembles a frog cluster.
+
+    Args:
+        x (torch.Tensor | np.ndarray): Input 1D signal.
+        frog_mean (np.ndarray): Mean waveform of frog-labeled samples.
+        non_frog_mean (np.ndarray): Mean waveform of non-frog samples.
+        sample_rate (int): Sample rate in Hz.
+        target_len (int): Length of chunk in seconds.
+
+    Returns:
+        bool: True if signal resembles frog cluster, else False.
+    """
     target_len = int(target_len * sample_rate)
     x_np = x.numpy() if isinstance(x, torch.Tensor) else x
     frog_votes = 0
@@ -181,6 +224,23 @@ def separate_frog_sources(
     queue: deque[tuple[np.ndarray | torch.Tensor, int]] = deque([(features, 0)])
     max_total_nodes = (2**(max_depth + 1) - 1)
     nodes_procceded = 0
+    """
+    Recursively separate input audio into sources and identify frog-like components using BFS.
+
+    Args:
+        features (np.ndarray | torch.Tensor): Input audio signal.
+        sound_seperator: Source separation model with a `.pred()` method.
+        frog_mean (np.ndarray): Mean waveform of frog samples.
+        non_frog_mean (np.ndarray): Mean waveform of non-frog samples.
+        sample_rate (int): Audio sample rate in Hz.
+        target_len (int): Length of each chunk in seconds for classification.
+        denoiser (optional): Function to denoise audio sources.
+        session_key (optional): Identifier for logging progress remotely.
+        max_depth (int, optional): Max recursion depth for BFS. Defaults to 3.
+
+    Returns:
+        list[np.ndarray]: List of normalized frog-like audio sources.
+    """
 
     while queue:
         current, depth = queue.popleft()
@@ -225,6 +285,17 @@ def separate_frog_sources(
     return frogs
 
 def split_frogs(frogs: list[Any], sample_rate: int, silence_threshold: float) -> list[list[AudioSegment]]:
+    """
+    Split each frog audio into non-silent segments based on a silence threshold.
+
+    Args:
+        frogs (list[Any]): List of 1D audio arrays.
+        sample_rate (int): Audio sample rate in Hz.
+        silence_threshold (float): Silence threshold in dB for segment detection.
+
+    Returns:
+        list[list[AudioSegment]]: Nested list of AudioSegments per frog input.
+    """
     splitted_frogs = []
     for frog in frogs:
         segments = []
@@ -251,7 +322,28 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
                     feature_reductor: Optional[FeatureReductionMethod] = None,
                     session_key: Optional[str] = None,
                     ) -> list:
-    
+    """
+    Identify frog-like audio components in a signal and split them into segments.
+
+    Args:
+        x (np.ndarray | torch.Tensor): Input audio signal.
+        sample_rate (int): Audio sample rate in Hz.
+        silence_threshhold (int): Threshold in dB for detecting silence.
+        frog_mean (np.ndarray): Mean vector for frog-like audio.
+        non_frog_mean (np.ndarray): Mean vector for non-frog audio.
+        sound_seperator (SoundSperationMethod): Source separation model.
+        denoiser (Optional[DenoiseMethod]): Optional denoising method.
+        # The following parameter are still in the code to make it easier if we follow the "seperate between frog and non frog cluster"
+        feature_extractor (Optional[FeatureExtractMethod]): Placeholder for feature extraction (not used).
+        feature_reductor (Optional[FeatureReductionMethod]): Placeholder for feature reduction (not used).
+        clusterer (ClusteringMethod): Placeholder for downstream clustering (not used).
+
+        session_key (Optional[str]): Session ID for logging when in web context.
+
+    Returns:
+        list: List of segmented frog-like audio chunks with timing metadata.
+    """    
+
     if WEB_USE and session_key is None:
         raise ValueError("Session key must be provided when WEB_USE is enabled.")
 
@@ -309,6 +401,21 @@ def save_cluster_to_file(
     session_key: Optional[str] = None,
     in_path: Optional[Path] = None
 ) -> None:
+    """
+    Save segmented frog audio clusters to disk and optionally register them via web.
+
+    Each frog cluster is saved into a separate subdirectory within `output_dir`, with
+    each segment saved as a WAV file.
+
+    Args:
+        splitted_frogs (list): Nested list of segmented audio chunks per cluster.
+        output_dir (Path | str): Directory where output WAV files will be saved.
+        session_key (Optional[str]): Session ID used in web context.
+        in_path (Optional[Path]): Path to original input file, required if WEB_USE is enabled.
+
+    Returns:
+        None
+    """
     output_dir = Path(output_dir)
     if WEB_USE:
         if not in_path:
@@ -340,11 +447,32 @@ def save_cluster_to_file(
         )
         post_content(session_key, "Done", "Finished processing", "done")
 
-def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None) -> None:
+def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None, X_dir: Optional[Path | str] = None) -> None:
+    """
+    Main execution entry point for frog detection, separation, and clustering pipeline.
+
+    Depending on configuration and inputs, this function:
+    - Trains a source separator model using frog/non-frog mixtures.
+    - Computes frog and non-frog mean waveforms for classification.
+    - Processes a single input file or a directory of recordings.
+    - Applies denoising, separation, frog detection, segmentation, and saves output.
+
+    Args:
+        x_path (Optional[Path | str]): Path to single input audio file.
+        session_key (Optional[str]): Session ID used in web context.
+        X_dir (Optional[Path | str]): Path to directory of input files for batch processing.
+
+    Returns:
+        None
+    """
     if WEB_USE and session_key is None:
         raise ValueError("Session key have to be != None if WEB_USAGE.")
+    if x_path is None and X_dir is None and not TRAIN:
+        print("WARNING: Without x_path, X_dir or TRAIN-mode this function will do nothing.")
+        return
 
     AmphibDataset.sample_rate = SAMPLE_RATE
+    # Basic Noise which is common around ponds like crickets and white noise
     basic_noise_path = FILES_DIR / "basic_noise.wav"
     basic_noise, _ = librosa.load(basic_noise_path, sr=SAMPLE_RATE)
     denoiser = SpectralGate(sample_rate=SAMPLE_RATE, stationary=True, noise_signal=basic_noise)
@@ -352,27 +480,29 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
     sound_seperator = ConvTas(num_sources=2, sample_rate=SAMPLE_RATE)
     feature_extractor = None#OpenL3Embedding(sample_rate=SAMPLE_RATE)
     feature_reductor = None#PCA(n_dims=2)
-    clusterer = BGMM(n_clusters=10)
+    clusterer = None#BGMM(n_clusters=10)
 
     if FROG_MEAN is None or NON_FROG_MEAN is None or TRAIN:
         dataset, kaggle_dataset, youtube_dataset, mixture_dataset = create_datasets(data_path=FILES_DIR / "frog_sounds", denoiser=denoiser, basic_preprocessor=basic_preprocessor)
     
     # Fine-tune the sound seperator model
+    # The idea is: we use a froggy (source 1) (drawn from kaggle dataset) and non froggy (source 2) sample (randomly draw from some youtube sounds like bells, cars and ponds). Combine them and build a 
     if TRAIN:
         basic_preprocessor = BasicPreprocessor(sample_rate=SAMPLE_RATE, add_freq_dim=None, parts_len=8, resample_rate=SAMPLE_RATE)
         batch_size = 4
+        # just use 300 files per epoch to train to reduce the computational needs
         mixture_dataset, _ = random_split(mixture_dataset, [300, len(mixture_dataset) - 300])
         train_loader = DataLoader(mixture_dataset, batch_size=batch_size)
         sound_seperator.train(train_loader)
 
     else:
         if FROG_MEAN is None:
-            #frog_mean = mean_dataset(kaggle_dataset, SAMPLE_RATE, target_len=TARGET_LEN)
-            frog_mean, _ = librosa.load(FILES_DIR / "frog_mean.wav", sr=SAMPLE_RATE, duration=TARGET_LEN)
+            frog_mean = mean_dataset(kaggle_dataset, SAMPLE_RATE, target_len=TARGET_LEN)
             frog_mean = denoiser(frog_mean)
             np.save(FROG_MEAN_PATH, frog_mean)
         if NON_FROG_MEAN is None:
             non_frog_mean = mean_dataset(youtube_dataset, SAMPLE_RATE, target_len=TARGET_LEN)
+            # Since we wanna filter out anything which is not a frog we will not denoise here
             np.save(NON_FROG_MEAN_PATH, non_frog_mean)
 
 
@@ -402,10 +532,11 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
                                         frog_mean = FROG_MEAN if FROG_MEAN is not None else frog_mean,
                                         non_frog_mean = NON_FROG_MEAN if NON_FROG_MEAN is not None else non_frog_mean)
             save_cluster_to_file(clustered, output_dir, session_key, x_path)
-        else:
+        elif X_dir:
+            # if you want to use many own recorded files you can simple create a dataset from it (AmphibDataset) and 
             output_base_dir = FILES_DIR / "clustered"
             if (FROG_MEAN is None and NON_FROG_MEAN is None) or TRAIN:
-                dataset = AmphibDataset(parent_path=FILES_DIR / "frog_sounds", denoiser=denoiser, basic_preprocessor=basic_preprocessor)
+                dataset = AmphibDataset(parent_path=X_dir, denoiser=denoiser, basic_preprocessor=basic_preprocessor)
             dataloader = DataLoader(dataset)
             for x, path in tqdm(dataloader):
                 path = Path(path[0])
@@ -420,7 +551,7 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
                                             frog_mean = FROG_MEAN if FROG_MEAN is not None else frog_mean,
                                             non_frog_mean = NON_FROG_MEAN if NON_FROG_MEAN is not None else non_frog_mean)
                 save_cluster_to_file(clustered, output_dir, session_key)
-    return
 
 if __name__ == "__main__":
-    main(FILES_DIR / "frog_sounds" / "243B1F02648802FC_20250503_035500.WAV")
+    main(x_path=FILES_DIR / "frog_sounds" / "243B1F02648802FC_20250503_035500.WAV")
+    main(X_dir=FILES_DIR / "frog_sounds")

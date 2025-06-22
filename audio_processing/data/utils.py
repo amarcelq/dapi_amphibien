@@ -27,10 +27,4 @@ def download_mixture_audio():
     download_youtube_audio("https://www.youtube.com/watch?v=euEwKtP5CG4")
 
 if __name__ == "__main__":
-    pass
-    # download_youtube_audio("https://www.youtube.com/watch?v=d-WOGMTRyKw")
-    # download_youtube_audio("https://www.youtube.com/watch?v=K6xsEng2PhU")
-    # download_youtube_audio("https://www.youtube.com/watch?v=ONYd86SEisY")
-    # download_youtube_audio("https://www.youtube.com/watch?v=1EdFkekr9I0")
-    # download_youtube_audio("https://www.youtube.com/watch?v=0pyJL_-1s1c")
-    # download_youtube_audio("https://www.youtube.com/watch?v=euEwKtP5CG4")
+    download_mixture_audio()
