@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
 from fastapi import FastAPI
+import tensorflow as tf
 from pydantic import BaseModel
 import asyncio
 from data.dataset import AmphibDataset, FILES_DIR, KaggleAnuranSoundDataset, MixedAudioDataset, YouTubeNoiseDataset
@@ -8,7 +8,7 @@ from preprocessing.denoise import SpectralGate, DenoiseMethod
 from preprocessing.basic_preprocessing import BasicPreprocessor
 from torch.utils.data import DataLoader
 from sound_seperation.clustering import BGMM, ClusteringMethod
-from sound_seperation.feature_extraction import MFCC, SpectralFeature, Chroma, FeatureExtractMethod
+from sound_seperation.feature_extraction import MFCC, SpectralFeature, Chroma, OpenL3Embedding, FeatureExtractMethod
 from sound_seperation.feature_reduction import PCA, FeatureReductionMethod
 from sound_seperation.sound_speration import ConvTas, SoundSperationMethod
 
@@ -45,14 +45,14 @@ class StartProcessRequest(BaseModel):
     session_key: str
 
 def create_post_content(session_key: str, name: str, description: str, status: str = "running") -> tuple[str, dict[str, Any]]:
-    return "web:8000/internal/progress/update/", {"session_key": session_key, 
+    return "http://web:8000/internal/progress/update/", {"session_key": session_key, 
                                                   "progress":{"status": status,
                                                               "name": {name},
                                                               "description": {description}}}
 
 @app.post("/start_process")
 async def start_process(request: StartProcessRequest):
-    requests.post("web:8000/internal/progress/update/",
+    requests.post("http://web:8000/internal/progress/update/",
                   json={"session_key": request.session_key,
                         "progress":{"status":"running","name":"Loading File","description":"Loading the uploaded file"}})
     asyncio.create_task(process(request))

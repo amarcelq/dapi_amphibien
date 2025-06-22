@@ -15,5 +15,5 @@ def process(session_key):
     session.save()
     upload = session["original_upload_location"]
 
-    requests.post("audio:7777/start_process",json={"session_key":session_key, "path":upload})
+    requests.post("http://audio:7777/start_process",json={"session_key":session_key, "path":upload})
     return session_key

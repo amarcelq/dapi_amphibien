@@ -1,7 +1,7 @@
 import librosa
 import numpy as np
 from abc import ABC, abstractmethod
-# import openl3
+import openl3
 
 class FeatureExtractMethod(ABC):
     @abstractmethod
@@ -53,13 +53,13 @@ class Chroma(FeatureExtractMethod):
         # flatten features
         return x.reshape(*x.shape[:-2], -1)
 
-# class OpenL3Embedding(FeatureExtractMethod):
-#     def __init__(self, sample_rate: int, mono: bool = True):
-#         self.sample_rate = sample_rate
-#         self.mono = mono
+class OpenL3Embedding(FeatureExtractMethod):
+    def __init__(self, sample_rate: int, mono: bool = True):
+        self.sample_rate = sample_rate
+        self.mono = mono
 
-#     def __call__(self, x):
-#         x, _ = openl3.get_audio_embedding(x, self.sample_rate, content_type="env")
-#         # openl3 returns a list of np arrays
-#         x = np.array(x)
-#         return x
+    def __call__(self, x):
+        x, _ = openl3.get_audio_embedding(x, self.sample_rate, content_type="env")
+        # openl3 returns a list of np arrays
+        x = np.array(x)
+        return x
