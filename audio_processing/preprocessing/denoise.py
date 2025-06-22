@@ -10,7 +10,6 @@ from scipy.signal import welch
 import matplotlib.pyplot as plt
 import librosa
 from abc import ABC, abstractmethod
-import utils
 
 # From the picutre it seems like stationary white noise
 def analyse_noise(x: np.ndarray, 

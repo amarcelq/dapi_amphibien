@@ -26,9 +26,11 @@ import os
 import requests
 from scipy.spatial.distance import euclidean
 from dataclasses import dataclass
+from scipy.spatial.distance import cosine
+from collections import deque
 
 TRAIN: bool = False
-WEB_USE: bool = True
+WEB_USE: bool = False
 SAMPLE_RATE: int = 8000
 SILENCE_THRESHOLD: int = 35
 FROG_MEAN_PATH: Path = FILES_DIR / "frog_mean.npy"
@@ -173,28 +175,28 @@ def separate_frog_sources(
     sample_rate: int,
     target_len: int,
     denoiser=None,
-    session_key=None
+    session_key=None,
+    max_depth: int = 4
 ) -> list[np.ndarray]:
     frogs: list[np.ndarray] = []
-    stack: list[np.ndarray | torch.Tensor] = [features]
-    seen = set()
-    i = 0
+    queue: deque[tuple[np.ndarray | torch.Tensor, int]] = deque([(features, 0)])
+    max_total_nodes = (2**max_depth)
+    nodes_procceded = 0
 
-    while stack:
+    while queue:
+        current, depth = queue.popleft()
+        
+        if depth >= max_depth:
+            continue 
+        
         if WEB_USE:
             post_content(
                 session_key=session_key,
                 name=f"Separate Sources with {sound_seperator.__class__.__name__}",
-                description=f"Separate Sources Iteration: {i}"
+                description=f"Separate Sources {nodes_procceded}/{max_total_nodes} Nodes procceeded."
             )
         else:
-            print(f"Iteration: {i}")
-
-        current = stack.pop()
-        key = tuple(current.numpy()) if isinstance(current, torch.Tensor) else tuple(current)
-        if key in seen:
-            continue
-        seen.add(key)
+            print(f"{nodes_procceded}/{max_total_nodes} Nodes procceeded.")
 
         if isinstance(current, np.ndarray):
             current = torch.Tensor(current)
@@ -203,17 +205,23 @@ def separate_frog_sources(
         separated = sound_seperator.pred(current).squeeze(0)
         sources = [separated[0, :], separated[1, :]]
 
+        added_children = 0
+
         for source in sources:
             if is_frog_cluster(source, frog_mean, non_frog_mean, sample_rate=sample_rate, target_len=target_len):
                 source_np = source.numpy() if isinstance(source, torch.Tensor) else source
-                if not any(np.allclose(existing, source_np, atol=1e-2) for existing in frogs):
-                    if denoiser:
-                        source_np = denoiser(source_np)
-                    frogs.append(source_np)
-                    stack.append(source_np)
-        if i == 4:
-            break
-        i += 1
+                if denoiser:
+                    source_np = denoiser(source_np)
+                queue.append((source_np, depth + 1))
+                added_children += 1
+            nodes_procceded += 1
+
+        if added_children == 0 or depth + 1 >= max_depth:
+            frogs.extend([
+                source.numpy() if isinstance(source, torch.Tensor) else source
+                for source in sources
+                if is_frog_cluster(source, frog_mean, non_frog_mean, sample_rate, target_len)
+            ])
 
     return frogs
 
@@ -295,32 +303,42 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
 
     return split_frogs(frogs, sample_rate, silence_threshhold)
 
-def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str, session_key: Optional[str] = None, in_path: Optional[Path]=None):
-    output_dir = Path(output_dir) if isinstance(output_dir, str) else output_dir
+def save_cluster_to_file(
+    splitted_frogs: list,
+    output_dir: Path | str,
+    session_key: Optional[str] = None,
+    in_path: Optional[Path] = None
+) -> None:
+    output_dir = Path(output_dir)
     if WEB_USE:
+        if not in_path:
+            raise ValueError("in_path is not permitted if WEB_USE is set.")
         samples = list()
-        snippets = list()
-    for i, splitted_frog in enumerate(splitted_frogs):
+
+    for cluster_idx, frog_cluster in enumerate(splitted_frogs):
+        cluster_dir = output_dir / str(cluster_idx)
+        cluster_dir.mkdir(parents=True, exist_ok=True)
         if WEB_USE:
             snippets = list()
-        splitted_frog_dir = output_dir / str(i)
-        splitted_frog_dir.mkdir(parents=True, exist_ok=True)
-        for i, audio_segment in enumerate(splitted_frog):
-            snippet_path:Path = splitted_frog_dir / f"{i}.wav"
-            sf.write(splitted_frog_dir / f"{i}.wav", audio_segment.data, SAMPLE_RATE, format="wav")
-            if WEB_USE:
-                snippets.append((snippet_path.absolute(), audio_segment.start_ms, audio_segment.duration_ms))
-        if WEB_USE:
-            samples.append(generate_web_sample(i, snippets))
-    
-    if WEB_USE:
-        requests.post("http://web:8000/internal/progress/finish/", json={"session_key":session_key, "result":create_web_return(samples, str(in_path.absolute()))})
-        post_content(session_key,"Done","Finished processing","done")
 
-    # for cluster, data in clustered.items():
-    #     for occurence, splitted_data in enumerate(data):
-    #         output_file = os.path.join(output_dir, f"{file_name}_{occurence}_{cluster}.wav")
-    #         sf.write(output_file, splitted_data, SAMPLE_RATE)
+        for segment_idx, segment in enumerate(frog_cluster):
+            path = cluster_dir / f"{segment_idx}.wav"
+            sf.write(path, segment.data, SAMPLE_RATE, format="wav")
+            if WEB_USE:
+                snippets.append((path.absolute(), segment.start_ms, segment.duration_ms))
+
+        if WEB_USE:
+            samples.append(generate_web_sample(cluster_idx, snippets))
+
+    if WEB_USE:
+        requests.post(
+            "http://web:8000/internal/progress/finish/",
+            json={
+                "session_key": session_key,
+                "result": create_web_return(samples, str(in_path.absolute()))
+            }
+        )
+        post_content(session_key, "Done", "Finished processing", "done")
 
 def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None) -> None:
     if WEB_USE and session_key is None:
