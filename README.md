@@ -81,8 +81,11 @@ When the page is running, drag n' drop a sound file (`.wav`) onto the green box.
 After it is done progressing, it will show the originial recording, as well as all found clusters of sound. Those should be frogs, but it can also happen that other sounds find their way there. Just Click on the wave forms to listen to a sample of them. To see all samples of one cluster, exapnd the tile by clicking on "Show more". 
 ![Tiles Image]()
 
-## How it works and what we've tried
-idkdidkidk
+## How it works
+It works by doing XY
+
+## Problems and Solutions
+- IDK _> idk
 
 ## Future Steps
 Here now follows a list with things that could be added to the project or which's foundations already been laid, but would be outside of the scope for this project.
