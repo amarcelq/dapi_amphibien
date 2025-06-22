@@ -6,7 +6,7 @@ assets/node_modules/
 public/
 public_collected/
 .venv
-
+audio_processing/
 .coverage
 .dockerignore
 .env*

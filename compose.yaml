@@ -14,8 +14,6 @@ x-app: &default-app
     redis:
       condition: "service_started"
       required: false
-    audio:
-      condition: "service_healthy"
   env_file:
     - ".env"
   restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
@@ -114,12 +112,6 @@ services:
     env_file:
       - ".env"
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
-    healthcheck:
-      test: "curl localhost:7777/healthy"
-      interval: "60s"
-      timeout: "3s"
-      start_period: "5s"
-      retries: 3
     volumes:
       - "media:/media"
 

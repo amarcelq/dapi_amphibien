@@ -19,6 +19,7 @@ def progress_update(request):
         return JsonResponse({"status": "ok"})
     return JsonResponse({"error": "invalid method"}, status=405)
 
+@csrf_exempt
 def progress_finish(request):
     if request.method == "POST":
         data = json.loads(request.body)
@@ -27,6 +28,7 @@ def progress_finish(request):
         progress = data.get("result")
         session:SessionBase = SessionStore(session_key=session_key)
         session["result"] = progress #{"status":"done","name":"Finished","description":""}
+        print("Saving: ", progress)
         session.save()
         return JsonResponse({"status": "ok"})
     return JsonResponse({"error": "invalid method"}, status=405)
