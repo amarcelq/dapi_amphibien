@@ -41,10 +41,11 @@ def progress_finish(request):
 
 @csrf_exempt
 def download_session_folder(request):
-    session_key = request.session.get("session_key")
+    session_key = request.session.session_key
     if not session_key:
-        return HttpResponseBadRequest("Session key is missing. A session should always exist.")
-    
+        return HttpResponseBadRequest(
+            "Session key is missing. A session should always exist."
+        )
     folder_path = os.path.join(settings.MEDIA_ROOT, 'sessions', session_key)
     if not os.path.exists(folder_path) or not os.path.isdir(folder_path):
         raise Http404("Session folder not found.")
