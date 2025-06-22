@@ -52,6 +52,10 @@ def create_post_content(session_key: str, name: str, description: str, status: s
                                                               "name": {name},
                                                               "description": {description}}}
 
+def post_content(session_key: str, name: str, description: str, status: str = "running")->None:
+    url, body = create_post_content(session_key=session_key, name=name, description=description, status=status)
+    requests.post(url=url, json=body)  
+
 @app.post("/start_process")
 async def start_process(request: StartProcessRequest):
     requests.post("http://web:8000/internal/progress/update/",
@@ -147,9 +151,9 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
     
     features: torch.Tensor | np.ndarray = torch.Tensor(x) if isinstance(x, np.ndarray) else x
     if session_key:
-        requests.post(create_post_content(session_key=session_key, 
+        post_content(session_key=session_key, 
                             name=f"Seperate Sources with {sound_seperator.__class__.__name__}",
-                            description="Seperate Sources"))
+                            description="Seperate Sources")
         
     frogs: list[np.ndarray] = list()
     stack = [features]
@@ -157,9 +161,9 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
 
     while stack:
         if session_key:
-            requests.post(create_post_content(session_key=session_key, 
+            post_content(session_key=session_key, 
                                 name=f"Sound Seperation with {sound_seperator.__class__.__name__}",
-                                description=f"Sound Seperation Iteration: {i}"))  
+                                description=f"Sound Seperation Iteration: {i}")
         current = stack.pop()
         current: torch.Tensor | np.ndarray = torch.Tensor(current) if isinstance(x, np.ndarray) else current
         current = current.reshape(1, 1, -1)
@@ -183,30 +187,30 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
     # TODO: Maybe fix it!
     # if denoiser:
     #     if session_key:
-    #         requests.post(create_post_content(session_key=session_key, 
+    #         post_content(session_key=session_key, 
     #                             name=f"Denoise Seperated Sources with {denoiser.__class__.__name__}",
-    #                             description="Denoise seperated Sources"))    
+    #                             description="Denoise seperated Sources")
     #     x = denoiser(x)
     #     features = x
 
     # if feature_extractor:
     #     if session_key:
-    #         requests.post(create_post_content(session_key=session_key, 
+    #         post_content(session_key=session_key, 
     #                             name=f"Extract Features with {feature_extractor.__class__.__name__}",
-    #                             description="Extract relevant features from sperated Sources"))
+    #                             description="Extract relevant features from sperated Sources")
     #     features = feature_extractor(features)
 
     # if feature_reductor:
     #     if session_key:
-    #         requests.post(create_post_content(session_key=session_key, 
+    #         post_content(session_key=session_key, 
     #                             name=f"Reduce Features with {feature_reductor.__class__.__name__}",
-    #                             description="Reduce Features"))   
+    #                             description="Reduce Features")   
     #     features = feature_reductor(features)
 
     # if session_key:
-    #     requests.post(create_post_content(session_key=session_key, 
+    #     post_content(session_key=session_key, 
     #                         name=f"Create Clusters with {clusterer.__class__.__name__}",
-    #                         description="Create Clusters"))  
+    #                         description="Create Clusters")  
     # labels = clusterer(features.reshape(-1, 1))
 
     # unique_labels = set(labels)
@@ -269,9 +273,9 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
 
         if x_path:    
             if session_key:
-                requests.post(create_post_content(session_key=session_key, 
+                post_content(session_key=session_key, 
                                     name=f"Loading File with {SAMPLE_RATE}",
-                                    description="Loading File")) 
+                                    description="Loading File")
 
             x, _ = librosa.load(x_path, sr=SAMPLE_RATE)
             x_path = Path(x_path) if isinstance(x_path, str) else x_path
