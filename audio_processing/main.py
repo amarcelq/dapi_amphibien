@@ -295,12 +295,14 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
 
     return split_frogs(frogs, sample_rate, silence_threshhold)
 
-def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str, session_key: Optional[str] = None):
+def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str, session_key: Optional[str] = None, in_path: Optional[Path]=None):
     output_dir = Path(output_dir) if isinstance(output_dir, str) else output_dir
     if WEB_USE:
         samples = list()
         snippets = list()
     for i, splitted_frog in enumerate(splitted_frogs):
+        if WEB_USE:
+            snippets = list()
         splitted_frog_dir = output_dir / str(i)
         splitted_frog_dir.mkdir(parents=True, exist_ok=True)
         for i, audio_segment in enumerate(splitted_frog):
@@ -312,7 +314,7 @@ def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str, session_k
             samples.append(generate_web_sample(i, snippets))
     
     if WEB_USE:
-        requests.post("http://web:8000/internal/progress/finish/", json={"session_key":session_key, "result":create_web_return(samples, str(output_dir))})
+        requests.post("http://web:8000/internal/progress/finish/", json={"session_key":session_key, "result":create_web_return(samples, str(in_path.absolute()))})
         post_content(session_key,"Done","Finished processing","done")
 
     # for cluster, data in clustered.items():
@@ -378,7 +380,7 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
                                         session_key = session_key,
                                         frog_mean = FROG_MEAN if FROG_MEAN is not None else frog_mean,
                                         non_frog_mean = NON_FROG_MEAN if NON_FROG_MEAN is not None else non_frog_mean)
-            save_cluster_to_file(clustered, output_dir, session_key)
+            save_cluster_to_file(clustered, output_dir, session_key, x_path)
         else:
             output_base_dir = FILES_DIR / "clustered"
             if (FROG_MEAN is None and NON_FROG_MEAN is None) or TRAIN:
