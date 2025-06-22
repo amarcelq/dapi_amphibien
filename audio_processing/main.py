@@ -30,7 +30,7 @@ from scipy.spatial.distance import cosine
 from collections import deque
 
 TRAIN: bool = False
-WEB_USE: bool = False
+WEB_USE: bool = True
 SAMPLE_RATE: int = 8000
 SILENCE_THRESHOLD: int = 35
 FROG_MEAN_PATH: Path = FILES_DIR / "frog_mean.npy"
