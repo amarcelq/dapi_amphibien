@@ -53,6 +53,3 @@ class TSNE(FeatureReductionMethod):
     def __call__(self, x):
         x = self.scaler.fit_transform(x)
         return self.tsne.fit_transform(x)
-# TODO: Maybe use a Autoencoder and train it with the Sound Speration Model to do both in once
-# TODO: Also here really extensive and therefore first give the classical method a shoot and if
-# TODO: its really bad try the autoencoder apporach

@@ -137,13 +137,6 @@ class Wiener(DenoiseMethod):
         # Reconstruct time-domain signal
         return librosa.istft(enhanced_stft)
 
-# TODO: maybe try: https://github.com/lab-emi/CleanUMamba/tree/main , https://github.com/youshanzhang/birdsoundsdenoising , https://github.com/rubenohana/Gibbs-Diffusion
-
-# TODO: I think to remove noise with this classic methods is enough but if not we might
-# TODO: can improve it by learning a defusion model (really extensive and therefor just reasonable
-# TODO: if we see the noise it our main problem)
-
-
 if __name__ == "__main__":
     pass
     # basic_noise_path = FILES_DIR / "basic_noise.wav"

@@ -25,9 +25,6 @@ A web application to discover different frogs in a recording
 
 This project is a research project, trying to separate unique frog calls from one recording. 
 ### Built With
-
-This section should list any major frameworks/libraries used to bootstrap your project. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
-
 - [Django](https://www.djangoproject.com)
 - [Docker](https://www.docker.com)
 - [wavesurfer.js](https://wavesurfer.xyz)
@@ -35,9 +32,8 @@ This section should list any major frameworks/libraries used to bootstrap your p
 - [Redis](https://redis.io)
 - [FastAPI](https://fastapi.tiangolo.com)
 ## Getting Started
+This shows how you can setup the project on your own environment.
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
 ### Prerequisites
 
 You need a working docker deamon installed and running. Confirm with `docker -v`.
@@ -83,7 +79,6 @@ In some cases it could be necessary to install the dependencies manually (e.g. w
 When the page is running, drag n' drop a sound file (`.wav`) onto the green box. The site will begin processing it showing a progress bar. 
 ![Process Image](docs/pics/progress.png)
 After it is done progressing, it will show the originial recording, as well as all found clusters of sound. Those should be frogs, but it can also happen that other sounds find their way there. Just Click on the wave forms to listen to a sample of them. To see all samples of one cluster, exapnd the tile by clicking on "Show more". 
-![Tiles Image]()
 
 ## How It Works
 ### Frontend + Backend 
@@ -144,7 +139,7 @@ Here now follows a list with things that could be added to the project or which'
 - Datensammeln 25h
   - Aufstellgebiets-Auswahl 5h
   - Datensammeln (Hin- und Rückweg, Mikrofone an richtiger Stelle positionieren und in Betrieb nehmen, an mehreren Orten zu verschiedenen Zeitpunkten) 20h
-  - => Das Einsammeln der AudioMoths hat länger gedauer
+  - => Das Einsammeln der AudioMoths hat länger gedauert
 - Interface (website) erstellen 105h
   - Generell Aufsetzen 10h
   - Frontend/Backend 70h
@@ -162,9 +157,8 @@ Here now follows a list with things that could be added to the project or which'
   - Clustering 30h
   - etc 10h
 
-
-Hauptsächlich wurden die ML Prozesse gegenüber der geplanten Prozesse abgeändert, was zu zeitlichen Änderungen führte. Dies sind auch die einzigen Architekturunterschiede zwischen Planung und Ausführung (da auch eine konkrete Vorgehensweise gegeben der Aufgabenstellung nicht planbar war).
-
+Hauptsächlich wurden die Audioverarbeitungs-Prozesse gegenüber der geplanten Prozesse abgeändert, was zu zeitlichen Änderungen führte. Dies sind auch die einzigen Architekturunterschiede zwischen Planung und Ausführung. Dies war auch zu erwarten, da es sich in großen Teilen um ein Froschungsprojekt handelt, welches
+laut Definition darauf abzielt.
 
 ## License
 

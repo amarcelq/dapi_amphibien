@@ -357,7 +357,7 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
     if FROG_MEAN is None or NON_FROG_MEAN is None or TRAIN:
         dataset, kaggle_dataset, youtube_dataset, mixture_dataset = create_datasets(data_path=FILES_DIR / "frog_sounds", denoiser=denoiser, basic_preprocessor=basic_preprocessor)
     
-    # Post trains the sound seperator model
+    # Fine-tune the sound seperator model
     if TRAIN:
         basic_preprocessor = BasicPreprocessor(sample_rate=SAMPLE_RATE, add_freq_dim=None, parts_len=8, resample_rate=SAMPLE_RATE)
         batch_size = 4
@@ -386,11 +386,6 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
             x_path = Path(x_path) if isinstance(x_path, str) else x_path
             if denoiser:
                 x = denoiser(x)
-<<<<<<< HEAD
-=======
-            # if basic_preprocessor:
-            #     x = basic_preprocessor(x)
->>>>>>> c59827aaa1f95b473f63fc0cae6dd506f54a9912
             if WEB_USE:
                 output_dir = x_path.parent
             else:

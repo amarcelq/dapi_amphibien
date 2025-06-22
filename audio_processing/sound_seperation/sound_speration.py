@@ -1,7 +1,3 @@
-# wave-u-net
-# bird-MixIT
-# Demucs
-# convtastnet https://docs.pytorch.org/audio/2.3.0/generated/torchaudio.models.ConvTasNet.html#torchaudio.models.ConvTasNet
 from abc import ABC, abstractmethod
 from data.dataset import FILES_DIR
 import torch
@@ -10,7 +6,6 @@ from torchaudio.models import ConvTasNet
 from tqdm import tqdm
 from asteroid.losses import PITLossWrapper
 from asteroid.losses import pairwise_neg_sisdr
-import torchaudio
 
 WEIGHTS_DIR = FILES_DIR / "weights"
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
