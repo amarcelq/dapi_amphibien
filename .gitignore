@@ -223,7 +223,7 @@ __pycache__/
 
 # anything in files folder
 src/files/*
-!src/files/basic_mic_noise_with_crickets.wav
+!src/files/basic_noise.wav
 
 # Jupyter
 .ipynb_checkpoints
@@ -280,5 +280,10 @@ dist/
 .pyre/
 
 /audio_processing/files/*
+!/audio_processing/files/frog_mean.npy
+!/audio_processing/files/basic_noise.wav
+!/audio_processing/files/frog_mean.wav
+!/audio_processing/files/no_frog_mean.npy
+!/audio_processing/files/frog_sounds/
 !/audio_processing/files/weights/
 !/audio_processing/files/weights/frog_convtas.pt
