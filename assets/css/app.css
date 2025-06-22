@@ -436,7 +436,7 @@ body {
 #yellow .tile .main .wave {
   flex-grow: 1;
   width: 7em;
-  display: flex;
+  /* display: flex; */
   justify-content: center;
   align-items: center;
 }

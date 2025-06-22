@@ -61,6 +61,7 @@ function finish_process () {
       $new.data('duration', big_snippet.duration)
 
       const $sample_container = $new.find('.side')
+      $sample_container.empty()
       // add snippets
       for (const snip of sample.snippets) {
         const $new_snip = $snippet.clone(true).removeClass('PRESET')
