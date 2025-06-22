@@ -176,11 +176,11 @@ def separate_frog_sources(
     target_len: int,
     denoiser=None,
     session_key=None,
-    max_depth: int = 4
+    max_depth: int = 3
 ) -> list[np.ndarray]:
     frogs: list[np.ndarray] = []
     queue: deque[tuple[np.ndarray | torch.Tensor, int]] = deque([(features, 0)])
-    max_total_nodes = (2**max_depth)
+    max_total_nodes = (2**(max_depth + 1) - 1)
     nodes_procceded = 0
 
     while queue:
@@ -218,7 +218,7 @@ def separate_frog_sources(
 
         if added_children == 0 or depth + 1 >= max_depth:
             frogs.extend([
-                source.numpy() if isinstance(source, torch.Tensor) else source
+                BasicPreprocessor.normalize_to_lufs(source.numpy() if isinstance(source, torch.Tensor) else source, sample_rate=sample_rate)
                 for source in sources
                 if is_frog_cluster(source, frog_mean, non_frog_mean, sample_rate, target_len)
             ])
@@ -269,7 +269,9 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
         session_key=session_key
     )
 
-    # TODO: Maybe fix it!
+    # If there would be more compute available it would be possible to train the seperator to divide into "non frog" and "frog"
+    # and after 
+
     # if denoiser:
     #     if WEB_USE:
     #         post_content(session_key=session_key, 
@@ -300,7 +302,6 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
 
     # unique_labels = set(labels)
     # clustered: dict = {label: [] for label in unique_labels}
-
     return split_frogs(frogs, sample_rate, silence_threshhold)
 
 def save_cluster_to_file(
