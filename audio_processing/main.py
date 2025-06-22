@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from collections import deque
 
 TRAIN: bool = False
-WEB_USE: bool = False
+WEB_USE: bool = True
 # Set it to 8000 since ConvTas is pretrained on 8000
 SAMPLE_RATE: int = 8000
 # We use 35 db as silence to create more realistic since in real world it will never be completly silent
