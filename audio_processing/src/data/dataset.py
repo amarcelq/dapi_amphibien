@@ -141,8 +141,8 @@ def load_image(path: str | Path, output_size: Optional[Tuple[int, int]] = None):
     return img
 
 if __name__ == "__main__":
-    path = "/media/marcel/3831-6261/"
-    basic_noise_path = FILES_DIR / "basic_mic_noise_with_crickets.wav"
+    path = FILES_DIR / "frog_sounds"
+    basic_noise_path = FILES_DIR / "basic_noise.wav"
     basic_noise, _ = librosa.load(basic_noise_path, sr=AmphibDataset.sample_rate)
     dataset = AmphibDataset(path, 
                             BasicPreprocessor(sample_rate=AmphibDataset.sample_rate), 

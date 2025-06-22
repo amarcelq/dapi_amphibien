@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from fastapi import FastAPI
 import tensorflow as tf
 from pydantic import BaseModel
@@ -227,7 +228,6 @@ def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str, file_name
         splitted_frog_dir = output_dir / str(i)
         splitted_frog_dir.mkdir(parents=True, exist_ok=True)
         for i, occurence in enumerate(splitted_frog):
-            print(occurence)
             sf.write(splitted_frog_dir / f"{i}.wav", occurence, SAMPLE_RATE, format="wav")
 
     # for cluster, data in clustered.items():
@@ -236,19 +236,18 @@ def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str, file_name
     #         sf.write(output_file, splitted_data, SAMPLE_RATE)
 
 def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None) -> None:
-    #basic_noise_path = FILES_DIR / "basic_mic_noise_with_crickets.wav"
-    #basic_noise, _ = librosa.load(basic_noise_path, sr=AmphibDataset.sample_rate)
-    #noise_signal=basic_noise
-    denoiser = SpectralGate(sample_rate=SAMPLE_RATE, stationary=True)
-    basic_preprocessor = BasicPreprocessor(sample_rate=SAMPLE_RATE, parts_len=8, add_freq_dim=None, resample_rate=SAMPLE_RATE)
     AmphibDataset.sample_rate = SAMPLE_RATE
+    basic_noise_path = FILES_DIR / "basic_noise.wav"
+    basic_noise, _ = librosa.load(basic_noise_path, sr=SAMPLE_RATE)
+    denoiser = SpectralGate(sample_rate=SAMPLE_RATE, stationary=True, noise_signal=basic_noise)
+    basic_preprocessor = BasicPreprocessor(sample_rate=SAMPLE_RATE, parts_len=8, add_freq_dim=None, resample_rate=SAMPLE_RATE)
     sound_seperator = ConvTas(num_sources=2, sample_rate=SAMPLE_RATE)
     feature_extractor = None#OpenL3Embedding(sample_rate=SAMPLE_RATE)
     feature_reductor = PCA(n_dims=2)
     clusterer = BGMM(n_clusters=10)
 
     if FROG_MEAN is None or NON_FROG_MEAN is None or TRAIN:
-        dataset, kaggle_dataset, youtube_dataset, mixture_dataset = create_datasets(data_path="/media/marcel/3831-6261", denoiser=denoiser, basic_preprocessor=basic_preprocessor)
+        dataset, kaggle_dataset, youtube_dataset, mixture_dataset = create_datasets(data_path=FILES_DIR / "frog_sounds", denoiser=denoiser, basic_preprocessor=basic_preprocessor)
 
     if TRAIN:
         # Post trains the sound seperator model
@@ -290,7 +289,7 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
         else:
             output_base_dir = FILES_DIR / "clustered"
             if (FROG_MEAN is None and NON_FROG_MEAN is None) or TRAIN:
-                dataset = AmphibDataset(parent_path="/media/marcel/3831-6261", denoiser=denoiser, basic_preprocessor=basic_preprocessor)
+                dataset = AmphibDataset(parent_path=FILES_DIR / "frog_sounds", denoiser=denoiser, basic_preprocessor=basic_preprocessor)
             dataloader = DataLoader(dataset)
             for x, path in tqdm(dataloader):
                 path = Path(path[0])
@@ -306,4 +305,4 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
     return
 
 if __name__ == "__main__":
-    main("/media/marcel/3831-6261/20250503/243B1F02648802FC_20250503_035500.WAV")
+    main(FILES_DIR / "frog_sounds" / "243B1F02648802FC_20250503_035500.WAV")

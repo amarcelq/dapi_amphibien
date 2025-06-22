@@ -147,9 +147,9 @@ class Wiener(DenoiseMethod):
 
 if __name__ == "__main__":
     pass
-    # basic_noise_path = FILES_DIR / "basic_mic_noise_with_crickets.wav"
+    # basic_noise_path = FILES_DIR / "basic_noise.wav"
     # basic_noise, _ = librosa.load(basic_noise_path, sr=AmphibDataset.sample_rate)
-    # analyse_noise(basic_noise, sample_rate=AmphibDataset.sample_rate, title="basic_mic_noise_with_crickets", plot=True)
+    # analyse_noise(basic_noise, sample_rate=AmphibDataset.sample_rate, title="basic_noise", plot=True)
 
     # froggy_file_path = FILES_DIR / "243B1F02648802FC_20250503_044100.WAV"
     # froggy, _ = librosa.load(froggy_file_path, sr=AmphibDataset.sample_rate)
@@ -174,7 +174,7 @@ if __name__ == "__main__":
 
     # utils.plot_sound_waves([froggy, x_spectral_gate], in_one_ax=True)
 
-    # path = "/media/marcel/3831-6261/"
+    # path = FILES / "frog_sounds"
     # dataset = AmphibDataset(path)
     # batch_size = 64
     # dataloader = DataLoader(dataset, batch_size=1)
