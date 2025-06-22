@@ -58,11 +58,13 @@ def post_content(session_key: str, name: str, description: str, status: str = "r
     requests.post(url=url, json=body)  
 
 @app.post("/start_process")
-async def start_process(request: StartProcessRequest, background_tasks: BackgroundTasks):
+async def start_process(request: StartProcessRequest):
     requests.post("http://web:8000/internal/progress/update/",
                   json={"session_key": request.session_key,
                         "progress":{"status":"running","name":"Loading File","description":"Loading the uploaded file"}})
-    background_tasks.add_task(process, request)
+    loop = asyncio.get_running_loop()
+    loop.run_in_executor(None, process, request)
+    # asyncio.create_task(process(request))
     
     return {"message": f"Process started for path: {request.path}"}
 

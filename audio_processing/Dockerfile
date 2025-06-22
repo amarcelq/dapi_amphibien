@@ -19,5 +19,5 @@ RUN uv add tensorflow-cpu-aws
 # EXPOSE 8000
 
 # Start FastAPI app with uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7777", "--log-level", "debug"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7777", "--log-level", "debug", "--workers", "4"]
 # CMD ["tail", "-f", "/dev/null"]
