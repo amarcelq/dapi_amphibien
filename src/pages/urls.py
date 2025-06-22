@@ -6,5 +6,5 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("wav", views.upload_wav, name="upload_wav"),
     path("result", views.result, name="result"),
-    path("progress",views.progress, name="progress") 
+    path("progress",views.progress, name="progress")
 ]

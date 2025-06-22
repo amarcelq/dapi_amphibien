@@ -7,7 +7,7 @@ from django.http import HttpResponseBadRequest, JsonResponse
 from django.http.request import HttpRequest
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_POST
-
+from pathlib import Path
 from pages.tasks import process
 
 
@@ -68,6 +68,7 @@ def result(request):
 
     if request.session.get("result"):
         res = request.session["result"]
+        res["folder_path"] = str(Path(res["main_audio"]["url"]).parent.absolute())
         return JsonResponse(res)
     else: 
         # for now default if result not given

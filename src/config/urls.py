@@ -25,7 +25,8 @@ urlpatterns = [
     path("up/", include("up.urls")),
     path("", include("pages.urls")),
     path("internal/progress/update/", views.progress_update),
-    path("internal/progress/finish/", views.progress_finish)
+    path("internal/progress/finish/", views.progress_finish),
+    path('download-session/', views.download_session_folder, name='download_session_folder')
     # path("admin/", admin.site.urls),
 ]
 
