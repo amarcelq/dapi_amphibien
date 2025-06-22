@@ -179,18 +179,6 @@ class KaggleAnuranSoundDataset(Dataset):
     def cleanup_cache(self):
         if self.cache_dir.exists():
             shutil.rmtree(self.cache_dir)
-
-    def load_from_bytes(audio_clip: AudioSegment):
-        with io.BytesIO() as data:
-            with wave.open(data, "wb") as wavfile:
-                wavfile.setnchannels(audio_clip.channels)
-                wavfile.setsampwidth(audio_clip.sample_width)
-                wavfile.setframerate(audio_clip.frame_rate)
-                wavfile.writeframes(audio_clip.raw_data)
-            data.seek(0)
-            y, sr = librosa.load(data, sr=None, mono=False)
-        return y, sr
-
     def __len__(self):
         return len(self.file_paths)
 
@@ -211,12 +199,12 @@ class KaggleAnuranSoundDataset(Dataset):
         return torch.Tensor(x)
 
 class YouTubeNoiseDataset(Dataset):
-    def __init__(self, youtube_folder, target_len=3, sample_rate=8000):
+    def __init__(self, youtube_folder, target_len=3, sample_rate=8000, generate_n_samples=1500):
         self.sample_rate = sample_rate
         self.target_len = int(sample_rate * target_len)
         self.data = []
         max_segment_len = 10 * 60 * sample_rate # just load 10 minutes to make it more efficent
-
+        self.generate_n_samples = generate_n_samples
         for f in os.listdir(youtube_folder):
             if not f.endswith('.wav'):
                 continue
@@ -235,15 +223,16 @@ class YouTubeNoiseDataset(Dataset):
                 self.data.append((start_segment, end_segment))
             else:
                 waveform, _ = librosa.load(path, sr=sample_rate)
+                waveform = librosa.util.normalize(waveform)
                 waveform = torch.tensor(waveform).float()
                 self.data.append((waveform,))
 
     def __len__(self):
-        return len(self.data)
+        return self.generate_n_samples
 
-    def __getitem__(self, idx):
-        segments = self.data[idx]
-        segment = random.choice(segments) # just random start or end segment
+    def __getitem__(self, _):
+        segments = random.choice(self.data)
+        segment = random.choice(segments)  # starting or ending 10 minutes
         if segment.shape[-1] > self.target_len:
             start = random.randint(0, segment.shape[-1] - self.target_len)
             sample = segment[start:start+self.target_len]
