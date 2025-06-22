@@ -56,7 +56,7 @@ function finish_process () {
       $new.find('.main .top .name').text(sample.name)
       // add download path
       BASE_LINK = "download-cluster/?cluster_id="
-      $new.find(".main > .top > button.download").attr("href",BASE_LINK+sample.id)
+      $new.find(".main > .top > a.download").attr("href",BASE_LINK+sample.id)
 
       // first snipped is big one:
       const big_snippet = sample.snippets.shift()
@@ -64,7 +64,7 @@ function finish_process () {
       $new.data('duration', big_snippet.duration)
 
       const $sample_container = $new.find('.side')
-      if (sample.snippets.length()>0)
+      if (sample.snippets.length>0)
         $sample_container.empty()
       // add snippets
       for (const snip of sample.snippets) {
