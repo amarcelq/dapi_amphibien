@@ -28,7 +28,7 @@ from scipy.spatial.distance import euclidean
 from dataclasses import dataclass
 
 TRAIN: bool = False
-WEB_USE: bool = False
+WEB_USE: bool = True
 SAMPLE_RATE: int = 8000
 SILENCE_THRESHOLD: int = 35
 FROG_MEAN_PATH: Path = FILES_DIR / "frog_mean.npy"
