@@ -86,7 +86,9 @@ After it is done progressing, it will show the originial recording, as well as a
 ![Tiles Image]()
 
 ## How it works
-
+### Note: The whole programm is build so that it can work with or without the website look take a look into audio_processing/main.py. In this README we will just talk about the website implementation
+1. Read in the Input Frog Mixture from the Webinterface
+2. We apply some 
 
 ## Problems and Solutions
 - IDK _> idk
