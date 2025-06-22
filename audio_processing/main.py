@@ -295,7 +295,7 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
 
     return split_frogs(frogs, sample_rate, silence_threshhold)
 
-def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str):
+def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str, session_key: Optional[str] = None):
     output_dir = Path(output_dir) if isinstance(output_dir, str) else output_dir
     if WEB_USE:
         samples = list()
@@ -312,7 +312,8 @@ def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str):
             samples.append(generate_web_sample(i, snippets))
     
     if WEB_USE:
-        requests.post("htttp://web:8000/internal/progress/finish/", json={"result":create_web_return(samples, str(output_dir))})
+        requests.post("http://web:8000/internal/progress/finish/", json={"session_key":session_key, "result":create_web_return(samples, str(output_dir))})
+        post_content(session_key,"Done","Finished processing","done")
 
     # for cluster, data in clustered.items():
     #     for occurence, splitted_data in enumerate(data):
@@ -377,7 +378,7 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
                                         session_key = session_key,
                                         frog_mean = FROG_MEAN if FROG_MEAN is not None else frog_mean,
                                         non_frog_mean = NON_FROG_MEAN if NON_FROG_MEAN is not None else non_frog_mean)
-            save_cluster_to_file(clustered, output_dir)
+            save_cluster_to_file(clustered, output_dir, session_key)
         else:
             output_base_dir = FILES_DIR / "clustered"
             if (FROG_MEAN is None and NON_FROG_MEAN is None) or TRAIN:
@@ -395,7 +396,7 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
                                             feature_reductor = feature_reductor,
                                             frog_mean = FROG_MEAN if FROG_MEAN is not None else frog_mean,
                                             non_frog_mean = NON_FROG_MEAN if NON_FROG_MEAN is not None else non_frog_mean)
-                save_cluster_to_file(clustered, output_dir)
+                save_cluster_to_file(clustered, output_dir, session_key)
     return
 
 if __name__ == "__main__":
