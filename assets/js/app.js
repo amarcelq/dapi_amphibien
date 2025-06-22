@@ -54,6 +54,9 @@ function finish_process () {
       // create new tile
       const $new = $tile.clone(true).removeClass('PRESET')
       $new.find('.main .top .name').text(sample.name)
+      // add download path
+      BASE_LINK = "download-cluster/?cluster_id="
+      $new.find(".main > .top > a.download").attr("href",BASE_LINK+sample.id)
 
       // first snipped is big one:
       const big_snippet = sample.snippets.shift()
@@ -61,7 +64,8 @@ function finish_process () {
       $new.data('duration', big_snippet.duration)
 
       const $sample_container = $new.find('.side')
-      $sample_container.empty()
+      if (sample.snippets.length>0)
+        $sample_container.empty()
       // add snippets
       for (const snip of sample.snippets) {
         const $new_snip = $snippet.clone(true).removeClass('PRESET')
@@ -69,6 +73,15 @@ function finish_process () {
         $new_snip.find('a.download').attr('href', snip.url)
         $new_snip.data('start', snip.start)
         $new_snip.data('duration', snip.duration)
+        // make 
+        $new_snip.find("button.wave").data('path', snip.url)
+        $new_snip.find("button.wave").on("click", e => {
+          const path = $(e.currentTarget).data('path')
+          const audio = new Audio(path);
+          audio.currentTime = 0;
+          audio.play();
+        })        
+        
         //   append to tile
         $new_snip.appendTo($sample_container)
       }

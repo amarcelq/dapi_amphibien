@@ -61,3 +61,29 @@ def download_session_folder(request):
     temp.seek(0)
     response = FileResponse(temp, as_attachment=True, filename=f"{session_key}.zip")
     return response
+
+@csrf_exempt
+def download_cluster_folder(request):
+    session_key = request.session.session_key
+    if not session_key:
+        return HttpResponseBadRequest(
+            "Session key is missing. A session should always exist."
+        )
+    cluster_id = request.GET.get("cluster_id")
+    if not cluster_id:
+        return HttpResponseBadRequest("Missing cluster_id query parameter.")
+    folder_path = os.path.join(settings.MEDIA_ROOT, 'sessions', session_key, cluster_id)
+    if not os.path.exists(folder_path) or not os.path.isdir(folder_path):
+        raise Http404("Cluster folder not found.")
+    
+    temp = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
+    with ZipFile(temp, 'w') as zipf:
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                full_path = os.path.join(root, file)
+                rel_path = os.path.relpath(full_path, folder_path)
+                zipf.write(full_path, arcname=rel_path)
+    
+    temp.seek(0)
+    response = FileResponse(temp, as_attachment=True, filename=f"{session_key}_{cluster_id}.zip")
+    return response
