@@ -196,13 +196,6 @@ def separate_frog_sources(
             continue
         seen.add(key)
 
-        if WEB_USE:
-            post_content(
-                session_key=session_key,
-                name=f"Seperate Sources with {sound_seperator.__class__.__name__}",
-                description="Seperate Sources"
-            )
-
         if isinstance(current, np.ndarray):
             current = torch.Tensor(current)
         current = current.reshape(1, 1, -1)
