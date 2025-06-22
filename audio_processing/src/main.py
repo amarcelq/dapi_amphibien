@@ -16,7 +16,7 @@ import soundfile as sf
 import os
 from pathlib import Path
 import numpy as np
-import openl3
+# import openl3
 import torch
 def main():
 
@@ -47,7 +47,7 @@ def main():
         X = sound_seperator.pred(X)
         print(X.shape)
         x = [X[i].numpy() for i in range(X.shape[0])]
-        X, _ = openl3.get_audio_embedding(x, AmphibDataset.sample_rate, content_type="env")
+        # X, _ = openl3.get_audio_embedding(x, AmphibDataset.sample_rate, content_type="env")
         X = np.array(X).shape
 
         for i, data in enumerate(dataset):

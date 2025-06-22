@@ -8,7 +8,7 @@ from preprocessing.denoise import SpectralGate, DenoiseMethod
 from preprocessing.basic_preprocessing import BasicPreprocessor
 from torch.utils.data import DataLoader
 from sound_seperation.clustering import BGMM, ClusteringMethod
-from sound_seperation.feature_extraction import MFCC, SpectralFeature, Chroma, OpenL3Embedding, FeatureExtractMethod
+from sound_seperation.feature_extraction import MFCC, SpectralFeature, Chroma, FeatureExtractMethod
 from sound_seperation.feature_reduction import PCA, FeatureReductionMethod
 from sound_seperation.sound_speration import ConvTas, SoundSperationMethod
 
