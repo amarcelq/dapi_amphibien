@@ -25,7 +25,6 @@ from torch.utils.data import random_split
 import os
 import requests
 from scipy.spatial.distance import euclidean
-from collections import defaultdict
 
 TRAIN: bool = False
 WEB_USE: bool = False
@@ -167,7 +166,7 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
                     feature_extractor: Optional[FeatureExtractMethod] = None,
                     feature_reductor: Optional[FeatureReductionMethod] = None,
                     session_key: Optional[str] = None,
-                    ) -> dict:
+                    ) -> list:
     
     if WEB_USE and session_key is None:
         raise ValueError("Session key have to be != None if WEB_USAGE.")
@@ -251,7 +250,7 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
 
     return splitted_frogs
 
-def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str, file_name: Optional[str | Path] = None):
+def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str):
     output_dir = Path(output_dir) if isinstance(output_dir, str) else output_dir
     if WEB_USE:
         samples = list()
@@ -318,7 +317,10 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
 
             x, _ = librosa.load(x_path, sr=SAMPLE_RATE)
             x_path = Path(x_path) if isinstance(x_path, str) else x_path
-            output_dir = FILES_DIR / "clustered" / x_path.stem
+            if WEB_USE:
+                output_dir = x_path.parent
+            else:
+                output_dir = FILES_DIR / "clustered" / x_path.stem
             clustered = predict_cluster(x, 
                                         clusterer = clusterer, 
                                         sound_seperator = sound_seperator, 
@@ -328,7 +330,7 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
                                         session_key = session_key,
                                         frog_mean = FROG_MEAN if FROG_MEAN is not None else frog_mean,
                                         non_frog_mean = NON_FROG_MEAN if NON_FROG_MEAN is not None else non_frog_mean)
-            save_cluster_to_file(clustered, output_dir, x_path.stem)
+            save_cluster_to_file(clustered, output_dir)
         else:
             output_base_dir = FILES_DIR / "clustered"
             if (FROG_MEAN is None and NON_FROG_MEAN is None) or TRAIN:
@@ -344,7 +346,7 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
                                             feature_reductor = feature_reductor,
                                             frog_mean = FROG_MEAN if FROG_MEAN is not None else frog_mean,
                                             non_frog_mean = NON_FROG_MEAN if NON_FROG_MEAN is not None else non_frog_mean)
-                save_cluster_to_file(clustered, output_dir, path.stem)
+                save_cluster_to_file(clustered, output_dir)
     return
 
 if __name__ == "__main__":
