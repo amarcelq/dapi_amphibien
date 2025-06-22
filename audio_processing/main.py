@@ -27,7 +27,7 @@ import requests
 from scipy.spatial.distance import euclidean
 
 TRAIN: bool = False
-WEB_USE: bool = False
+WEB_USE: bool = True
 SAMPLE_RATE: int = 8000
 SILENCE_THRESHOLD: int = 35
 FROG_MEAN_PATH: Path = FILES_DIR / "frog_mean.npy"
@@ -187,7 +187,7 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
         if WEB_USE:
             post_content(session_key=session_key, 
                                 name=f"Seperate Sources with {sound_seperator.__class__.__name__}",
-                                description="Seperate Sources")
+                                description=f"Seperate Sources #{i}")
         current = stack.pop()
         current: torch.Tensor | np.ndarray = torch.Tensor(current) if isinstance(x, np.ndarray) else current
         current = current.reshape(1, 1, -1)
