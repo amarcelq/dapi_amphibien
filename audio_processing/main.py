@@ -26,11 +26,10 @@ import os
 import requests
 from scipy.spatial.distance import euclidean
 from dataclasses import dataclass
-from scipy.spatial.distance import cosine
 from collections import deque
 
 TRAIN: bool = False
-WEB_USE: bool = True
+WEB_USE: bool = False
 SAMPLE_RATE: int = 8000
 SILENCE_THRESHOLD: int = 35
 FROG_MEAN_PATH: Path = FILES_DIR / "frog_mean.npy"
@@ -349,17 +348,18 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
     basic_noise_path = FILES_DIR / "basic_noise.wav"
     basic_noise, _ = librosa.load(basic_noise_path, sr=SAMPLE_RATE)
     denoiser = SpectralGate(sample_rate=SAMPLE_RATE, stationary=True, noise_signal=basic_noise)
-    basic_preprocessor = BasicPreprocessor(sample_rate=SAMPLE_RATE, parts_len=8, add_freq_dim=None, resample_rate=SAMPLE_RATE)
+    basic_preprocessor = BasicPreprocessor(sample_rate=SAMPLE_RATE, add_freq_dim=None, resample_rate=SAMPLE_RATE)
     sound_seperator = ConvTas(num_sources=2, sample_rate=SAMPLE_RATE)
     feature_extractor = None#OpenL3Embedding(sample_rate=SAMPLE_RATE)
-    feature_reductor = PCA(n_dims=2)
+    feature_reductor = None#PCA(n_dims=2)
     clusterer = BGMM(n_clusters=10)
 
     if FROG_MEAN is None or NON_FROG_MEAN is None or TRAIN:
         dataset, kaggle_dataset, youtube_dataset, mixture_dataset = create_datasets(data_path=FILES_DIR / "frog_sounds", denoiser=denoiser, basic_preprocessor=basic_preprocessor)
-
+    
+    # Post trains the sound seperator model
     if TRAIN:
-        # Post trains the sound seperator model
+        basic_preprocessor = BasicPreprocessor(sample_rate=SAMPLE_RATE, add_freq_dim=None, parts_len=8, resample_rate=SAMPLE_RATE)
         batch_size = 4
         mixture_dataset, _ = random_split(mixture_dataset, [300, len(mixture_dataset) - 300])
         train_loader = DataLoader(mixture_dataset, batch_size=batch_size)
@@ -386,8 +386,6 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
             x_path = Path(x_path) if isinstance(x_path, str) else x_path
             if denoiser:
                 x = denoiser(x)
-            if basic_preprocessor:
-                x = basic_preprocessor(x)
             if WEB_USE:
                 output_dir = x_path.parent
             else:

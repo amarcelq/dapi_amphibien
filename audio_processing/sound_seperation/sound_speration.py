@@ -46,7 +46,7 @@ class ICA(SoundSperationMethod):
         return self.__call__(x)
 
 class ConvTas(SoundSperationMethod):
-    def __init__(self, num_sources = 2, sample_rate: int = 8000, pretrained_weights_path=WEIGHTS_DIR / "frog_convtas.pt"):
+    def __init__(self, num_sources: int = 2, sample_rate: int = 8000, pretrained_weights_path=WEIGHTS_DIR / "frog_convtas.pt"):
         self.pre_trained_weights = pretrained_weights_path
 
         self.model = ConvTasNet(
@@ -67,7 +67,7 @@ class ConvTas(SoundSperationMethod):
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         return self.model(x)
 
-    def train(self, train_loader, epochs=20):
+    def train(self, train_loader, epochs=20) -> None:
         optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
         loss_func = PITLossWrapper(pairwise_neg_sisdr, pit_from='perm_avg')
         self.model.train()
