@@ -25,6 +25,7 @@ from torch.utils.data import random_split
 import os
 import requests
 from scipy.spatial.distance import euclidean
+from dataclasses import dataclass
 
 TRAIN: bool = False
 WEB_USE: bool = False
@@ -45,6 +46,12 @@ async def healthy():
 class StartProcessRequest(BaseModel):
     path: str
     session_key: str
+
+@dataclass
+class AudioSegment:
+    data: np.ndarray
+    start_ms: float
+    duration_ms: float
 
 def create_post_content(session_key: str, name: str, description: str, status: str = "running") -> tuple[str, dict[str, Any]]:
     return "http://web:8000/internal/progress/update/", {"session_key": session_key, 
@@ -88,7 +95,6 @@ def create_web_return(samples: Sequence, in_path: str):
         }
     
     return res
-
 
 def create_datasets(data_path: Sequence[str] | Sequence[Path], denoiser: Optional[DenoiseMethod] = None, basic_preprocessor: Optional[BasicPreprocessor] = None):
     if isinstance(data_path, (str, Path)):
@@ -159,8 +165,85 @@ def is_frog_cluster(x: torch.Tensor | np.ndarray,
 
     return frog_votes > non_frog_votes
 
+def separate_frog_sources(
+    features: np.ndarray | torch.Tensor,
+    sound_seperator,
+    frog_mean,
+    non_frog_mean,
+    sample_rate: int,
+    target_len: int,
+    denoiser=None,
+    web_use=False,
+    session_key=None
+) -> list[np.ndarray]:
+    frogs: list[np.ndarray] = []
+    stack: list[np.ndarray | torch.Tensor] = [features]
+    seen = set()
+    i = 0
+
+    while stack:
+        if WEB_USE:
+            post_content(
+                session_key=session_key,
+                name=f"Separate Sources with {sound_seperator.__class__.__name__}",
+                description=f"Separate Sources Iteration: {i}"
+            )
+        else:
+            print(f"Iteration: {i}")
+
+        current = stack.pop()
+        key = tuple(current.numpy()) if isinstance(current, torch.Tensor) else tuple(current)
+        if key in seen:
+            continue
+        seen.add(key)
+
+        if web_use:
+            post_content(
+                session_key=session_key,
+                name=f"Seperate Sources with {sound_seperator.__class__.__name__}",
+                description="Seperate Sources"
+            )
+
+        if isinstance(current, np.ndarray):
+            current = torch.Tensor(current)
+        current = current.reshape(1, 1, -1)
+
+        separated = sound_seperator.pred(current).squeeze(0)
+        sources = [separated[0, :], separated[1, :]]
+
+        for source in sources:
+            if is_frog_cluster(source, frog_mean, non_frog_mean, sample_rate=sample_rate, target_len=target_len):
+                source_np = source.numpy() if isinstance(source, torch.Tensor) else source
+                if not any(np.allclose(existing, source_np, atol=1e-2) for existing in frogs):
+                    if denoiser:
+                        source_np = denoiser(source_np)
+                    frogs.append(source_np)
+                    stack.append(source_np)
+        if i == 4:
+            break
+        i += 1
+
+    return frogs
+
+def split_frogs(frogs: list[Any], sample_rate: int, silence_threshold: float) -> list[list[AudioSegment]]:
+    splitted_frogs = []
+    for frog in frogs:
+        segments = []
+        indices = librosa.effects.split(frog, top_db=silence_threshold)
+        for start, end in indices:
+            segment = AudioSegment(
+                data=frog[start:end],
+                start_ms=(start / sample_rate) * 1000,
+                duration_ms=((end - start) / sample_rate) * 1000
+            )
+            segments.append(segment)
+        splitted_frogs.append(segments)
+    return splitted_frogs
+
 def predict_cluster(x: np.ndarray | torch.Tensor,
                     clusterer: ClusteringMethod,
+                    sample_rate: int,
+                    silence_threshhold: int,
                     frog_mean: np.ndarray,
                     non_frog_mean: np.ndarray,
                     sound_seperator: SoundSperationMethod,
@@ -171,43 +254,22 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
                     ) -> list:
     
     if WEB_USE and session_key is None:
-        raise ValueError("Session key have to be != None if WEB_USAGE.")
-    
-    features: torch.Tensor | np.ndarray = torch.Tensor(x) if isinstance(x, np.ndarray) else x
-    if WEB_USE:
-        post_content(session_key=session_key, 
-                            name=f"Seperate Sources with {sound_seperator.__class__.__name__}",
-                            description="Seperate Sources")
-        
-    frogs: list[np.ndarray] = list()
-    stack = [features]
-    i = 1
+        raise ValueError("Session key must be provided when WEB_USE is enabled.")
 
-    while stack:
-        if WEB_USE:
-            post_content(session_key=session_key, 
-                                name=f"Seperate Sources with {sound_seperator.__class__.__name__}",
-                                description="Seperate Sources")
-        current = stack.pop()
-        current: torch.Tensor | np.ndarray = torch.Tensor(current) if isinstance(x, np.ndarray) else current
-        current = current.reshape(1, 1, -1)
-        _separated = sound_seperator.pred(current)
+    x_tensor = torch.Tensor(x) if isinstance(x, np.ndarray) else x
 
-        source_1 = _separated[0, 0, :]
-        source_2 = _separated[0, 1, :]
-        for source in (source_1, source_2):
-            if is_frog_cluster(source, 
-                               frog_mean, 
-                               non_frog_mean, 
-                               sample_rate=SAMPLE_RATE, 
-                               target_len=TARGET_LEN) and (len(frogs) == 0 or not np.allclose(frogs[-1], source, atol=1e-2)):
-                    if denoiser:
-                        source = denoiser(source)
-                    frogs.append(source)
-                    stack.append(source)
-        if i == 5:
-            break
-        i += 1
+    frogs = separate_frog_sources(
+        features=x_tensor,
+        sound_seperator=sound_seperator,
+        frog_mean=frog_mean,
+        non_frog_mean=non_frog_mean,
+        sample_rate=sample_rate,
+        target_len=TARGET_LEN,
+        denoiser=denoiser,
+        web_use=WEB_USE,
+        session_key=session_key
+    )
+
     # TODO: Maybe fix it!
     # if denoiser:
     #     if WEB_USE:
@@ -239,18 +301,8 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
 
     # unique_labels = set(labels)
     # clustered: dict = {label: [] for label in unique_labels}
-    splitted_frogs = list()
-    for frog in frogs:
-        indizes = librosa.effects.split(frog, top_db=SILENCE_THRESHOLD)
-        splitted = list()
-        for i in indizes:
-            s, e = i
-            start_ms = s / SAMPLE_RATE * 1000
-            duration_ms = (e - s) / SAMPLE_RATE * 1000
-            splitted.append((frog[s:e], start_ms, duration_ms))
-        splitted_frogs.append(splitted)
 
-    return splitted_frogs
+    return split_frogs(frogs, sample_rate, silence_threshhold)
 
 def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str):
     output_dir = Path(output_dir) if isinstance(output_dir, str) else output_dir
@@ -260,16 +312,16 @@ def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str):
     for i, splitted_frog in enumerate(splitted_frogs):
         splitted_frog_dir = output_dir / str(i)
         splitted_frog_dir.mkdir(parents=True, exist_ok=True)
-        for i, (occurence, start_ms, duration_ms) in enumerate(splitted_frog):
+        for i, audio_segment in enumerate(splitted_frog):
             snippet_path = splitted_frog_dir / f"{i}.wav",
-            sf.write(splitted_frog_dir / f"{i}.wav", occurence, SAMPLE_RATE, format="wav")
+            sf.write(splitted_frog_dir / f"{i}.wav", audio_segment.data, SAMPLE_RATE, format="wav")
             if WEB_USE:
-                snippets.append((snippet_path, start_ms, duration_ms))
+                snippets.append((snippet_path, audio_segment.start_ms, audio_segment.duration_ms))
         if WEB_USE:
             samples.append(generate_web_sample(i, snippets))
     
     if WEB_USE:
-        requests.post("htttp://web:8000/internal/progress/finish/", json={"result":create_web_return(samples, output_dir)})
+        requests.post("htttp://web:8000/internal/progress/finish/", json={"result":create_web_return(samples, str(output_dir))})
 
     # for cluster, data in clustered.items():
     #     for occurence, splitted_data in enumerate(data):
@@ -324,7 +376,9 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
             else:
                 output_dir = FILES_DIR / "clustered" / x_path.stem
             clustered = predict_cluster(x, 
-                                        clusterer = clusterer, 
+                                        clusterer = clusterer,
+                                        sample_rate=SAMPLE_RATE,
+                                        silence_threshhold=SILENCE_THRESHOLD,
                                         sound_seperator = sound_seperator, 
                                         feature_extractor = feature_extractor, 
                                         feature_reductor = feature_reductor,
@@ -343,6 +397,8 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
                 output_dir = output_base_dir / path.stem
                 clustered = predict_cluster(x, 
                                             clusterer = clusterer,
+                                            sample_rate=SAMPLE_RATE,
+                                            silence_threshhold=SILENCE_THRESHOLD,
                                             sound_seperator = sound_seperator, 
                                             feature_extractor = feature_extractor, 
                                             feature_reductor = feature_reductor,
