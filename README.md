@@ -86,7 +86,7 @@ After it is done progressing, it will show the originial recording, as well as a
 ![Tiles Image]()
 
 ## How it works
-It works by doing XY
+
 
 ## Problems and Solutions
 - IDK _> idk
