@@ -304,10 +304,10 @@ def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str):
         splitted_frog_dir = output_dir / str(i)
         splitted_frog_dir.mkdir(parents=True, exist_ok=True)
         for i, audio_segment in enumerate(splitted_frog):
-            snippet_path = splitted_frog_dir / f"{i}.wav",
+            snippet_path:Path = splitted_frog_dir / f"{i}.wav",
             sf.write(splitted_frog_dir / f"{i}.wav", audio_segment.data, SAMPLE_RATE, format="wav")
             if WEB_USE:
-                snippets.append((snippet_path, audio_segment.start_ms, audio_segment.duration_ms))
+                snippets.append((snippet_path.absolute(), audio_segment.start_ms, audio_segment.duration_ms))
         if WEB_USE:
             samples.append(generate_web_sample(i, snippets))
     
