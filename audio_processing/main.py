@@ -386,8 +386,8 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
             x_path = Path(x_path) if isinstance(x_path, str) else x_path
             if denoiser:
                 x = denoiser(x)
-            if basic_preprocessor:
-                x = basic_preprocessor(x)
+            # if basic_preprocessor:
+            #     x = basic_preprocessor(x)
             if WEB_USE:
                 output_dir = x_path.parent
             else:
