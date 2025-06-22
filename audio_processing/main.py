@@ -173,7 +173,6 @@ def separate_frog_sources(
     sample_rate: int,
     target_len: int,
     denoiser=None,
-    web_use=False,
     session_key=None
 ) -> list[np.ndarray]:
     frogs: list[np.ndarray] = []
@@ -197,7 +196,7 @@ def separate_frog_sources(
             continue
         seen.add(key)
 
-        if web_use:
+        if WEB_USE:
             post_content(
                 session_key=session_key,
                 name=f"Seperate Sources with {sound_seperator.__class__.__name__}",
@@ -266,7 +265,6 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
         sample_rate=sample_rate,
         target_len=TARGET_LEN,
         denoiser=denoiser,
-        web_use=WEB_USE,
         session_key=session_key
     )
 
