@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 import tensorflow as tf
 from pydantic import BaseModel
 import asyncio
@@ -48,20 +48,21 @@ class StartProcessRequest(BaseModel):
 
 def create_post_content(session_key: str, name: str, description: str, status: str = "running") -> tuple[str, dict[str, Any]]:
     return "http://web:8000/internal/progress/update/", {"session_key": session_key, 
-                                                  "progress":{"status": status,
-                                                              "name": {name},
-                                                              "description": {description}}}
+                                                              "progress":{"status": status,
+                                                              "name": name,
+                                                              "description": description}}
 
 def post_content(session_key: str, name: str, description: str, status: str = "running")->None:
     url, body = create_post_content(session_key=session_key, name=name, description=description, status=status)
+    print(body)
     requests.post(url=url, json=body)  
 
 @app.post("/start_process")
-async def start_process(request: StartProcessRequest):
+async def start_process(request: StartProcessRequest, background_tasks: BackgroundTasks):
     requests.post("http://web:8000/internal/progress/update/",
                   json={"session_key": request.session_key,
                         "progress":{"status":"running","name":"Loading File","description":"Loading the uploaded file"}})
-    asyncio.create_task(process(request))
+    background_tasks.add_task(process, request)
     
     return {"message": f"Process started for path: {request.path}"}
 
