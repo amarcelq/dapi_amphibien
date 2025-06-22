@@ -82,14 +82,14 @@ def generate_web_sample(id: int | str, snippets: Sequence):
     sample = {
                 "id": id,
                 "name": f"#{id}",
-                "snippets": [{"url": file_path, "start": start_ms, "duration": duration_ms} for file_path, start_ms, duration_ms in snippets]
+                "snippets": [{"url": str(file_path), "start": start_ms, "duration": duration_ms} for file_path, start_ms, duration_ms in snippets]
             }
 
     return sample
 
 def create_web_return(samples: Sequence, in_path: str):
     res = {
-            "main_audio": {"name": "Original", "url": in_path}, # the main, original uploaded audio track from the user
+            "main_audio": {"name": "Original", "url": str(in_path)}, # the main, original uploaded audio track from the user
             "alternative_audio": [{"name": "Denoised", "url": ""}], # alternative tracks that were created during processing (e.g. a denoised Version). They should all have the same length and SampleRate
             "samples": samples
         }
