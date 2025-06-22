@@ -21,7 +21,7 @@ class AmphibDataset(Dataset):
     sample_rate: int = 192000
 
     def __init__(self,
-                 parent_path_str: Optional[str] = None, 
+                 parent_path: Optional[str | Path] = None, 
                  basic_preprocessor: Optional[BasicPreprocessor] = None, 
                  denoiser: Optional[DenoiseMethod] = None,
                  file_paths: Optional[str | Path | Sequence[str] | Sequence[Path]] = None,
@@ -35,10 +35,10 @@ class AmphibDataset(Dataset):
                 file_paths = [file_paths]
             self.file_paths = [Path(f).with_name(Path(f).stem + Path(f).suffix.lower()) for f in file_paths]
         
-        if parent_path_str:
-            parent_path = Path(parent_path_str)
+        if parent_path:
+            parent_path = Path(parent_path) if isinstance(parent_path, str) else parent_path
             if not parent_path.exists():
-                raise FileNotFoundError(f"parent_path: {parent_path_str} does not exist.")
+                raise FileNotFoundError(f"parent_path: {parent_path} does not exist.")
             all_paths = list(parent_path.rglob("*.WAV"))
             if len(all_paths) == 0:
                 return

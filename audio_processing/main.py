@@ -28,13 +28,14 @@ from scipy.spatial.distance import euclidean
 from collections import defaultdict
 
 TRAIN: bool = False
+WEB_USE: bool = False
 SAMPLE_RATE: int = 8000
-SILENCE_THRESHOLD = 35
-FROG_MEAN_PATH = FILES_DIR / "frog_mean.npy"
-FROG_MEAN = np.load(FROG_MEAN_PATH) if FROG_MEAN_PATH.exists() else None
-NON_FROG_MEAN_PATH = FILES_DIR / "no_frog_mean.npy"
-NON_FROG_MEAN = np.load(NON_FROG_MEAN_PATH) if NON_FROG_MEAN_PATH.exists() else None
-TARGET_LEN = 5
+SILENCE_THRESHOLD: int = 35
+FROG_MEAN_PATH: Path = FILES_DIR / "frog_mean.npy"
+FROG_MEAN: Optional[np.ndarray] = np.load(FROG_MEAN_PATH) if FROG_MEAN_PATH.exists() else None
+NON_FROG_MEAN_PATH: Path = FILES_DIR / "no_frog_mean.npy"
+NON_FROG_MEAN: Optional[np.ndarray] = np.load(NON_FROG_MEAN_PATH) if NON_FROG_MEAN_PATH.exists() else None
+TARGET_LEN: int = 5
 
 app = FastAPI()
 
@@ -54,7 +55,6 @@ def create_post_content(session_key: str, name: str, description: str, status: s
 
 def post_content(session_key: str, name: str, description: str, status: str = "running")->None:
     url, body = create_post_content(session_key=session_key, name=name, description=description, status=status)
-    print(body)
     requests.post(url=url, json=body)  
 
 @app.post("/start_process")
@@ -70,6 +70,26 @@ async def start_process(request: StartProcessRequest):
 
 def process(request: StartProcessRequest):
     main(request.path, request.session_key)
+
+def generate_web_sample(id: int | str, snippets: Sequence):
+    id = str(id)
+    sample = {
+                "id": id,
+                "name": f"#{id}",
+                "snippets": [{"url": file_path, "start": start_ms, "duration": duration_ms} for file_path, start_ms, duration_ms in snippets]
+            }
+
+    return sample
+
+def create_web_return(samples: Sequence, in_path: str):
+    res = {
+            "main_audio": {"name": "Original", "url": in_path}, # the main, original uploaded audio track from the user
+            "alternative_audio": [{"name": "Denoised", "url": ""}], # alternative tracks that were created during processing (e.g. a denoised Version). They should all have the same length and SampleRate
+            "samples": samples
+        }
+    
+    return res
+
 
 def create_datasets(data_path: Sequence[str] | Sequence[Path], denoiser: Optional[DenoiseMethod] = None, basic_preprocessor: Optional[BasicPreprocessor] = None):
     if isinstance(data_path, (str, Path)):
@@ -151,9 +171,11 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
                     session_key: Optional[str] = None,
                     ) -> dict:
     
+    if WEB_USE and session_key is None:
+        raise ValueError("Session key have to be != None if WEB_USAGE.")
     
     features: torch.Tensor | np.ndarray = torch.Tensor(x) if isinstance(x, np.ndarray) else x
-    if session_key:
+    if WEB_USE:
         post_content(session_key=session_key, 
                             name=f"Seperate Sources with {sound_seperator.__class__.__name__}",
                             description="Seperate Sources")
@@ -163,10 +185,10 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
     i = 1
 
     while stack:
-        if session_key:
+        if WEB_USE:
             post_content(session_key=session_key, 
-                                name=f"Sound Seperation with {sound_seperator.__class__.__name__}",
-                                description=f"Sound Seperation Iteration: {i}")
+                                name=f"Seperate Sources with {sound_seperator.__class__.__name__}",
+                                description="Seperate Sources")
         current = stack.pop()
         current: torch.Tensor | np.ndarray = torch.Tensor(current) if isinstance(x, np.ndarray) else current
         current = current.reshape(1, 1, -1)
@@ -184,33 +206,33 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
                         source = denoiser(source)
                     frogs.append(source)
                     stack.append(source)
-        if i == 8:
+        if i == 5:
             break
         i += 1
     # TODO: Maybe fix it!
     # if denoiser:
-    #     if session_key:
+    #     if WEB_USE:
     #         post_content(session_key=session_key, 
-    #                             name=f"Denoise Seperated Sources with {denoiser.__class__.__name__}",
-    #                             description="Denoise seperated Sources")
+    #                      name=f"Denoise Seperated Sources with {denoiser.__class__.__name__}",
+    #                        description="Denoise seperated Sources")
     #     x = denoiser(x)
     #     features = x
 
     # if feature_extractor:
-    #     if session_key:
-    #         post_content(session_key=session_key, 
+    #     if WEB_USE:
+    #           post_content(session_key=session_key, 
     #                             name=f"Extract Features with {feature_extractor.__class__.__name__}",
     #                             description="Extract relevant features from sperated Sources")
     #     features = feature_extractor(features)
 
     # if feature_reductor:
-    #     if session_key:
+    #     if WEB_USE:
     #         post_content(session_key=session_key, 
     #                             name=f"Reduce Features with {feature_reductor.__class__.__name__}",
     #                             description="Reduce Features")   
     #     features = feature_reductor(features)
 
-    # if session_key:
+    # if WEB_USE:
     #     post_content(session_key=session_key, 
     #                         name=f"Create Clusters with {clusterer.__class__.__name__}",
     #                         description="Create Clusters")  
@@ -224,18 +246,31 @@ def predict_cluster(x: np.ndarray | torch.Tensor,
         splitted = list()
         for i in indizes:
             s, e = i
-            splitted.append(frog[s:e])
+            start_ms = s / SAMPLE_RATE * 1000
+            duration_ms = (e - s) / SAMPLE_RATE * 1000
+            splitted.append((frog[s:e], start_ms, duration_ms))
         splitted_frogs.append(splitted)
 
     return splitted_frogs
 
 def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str, file_name: Optional[str | Path] = None):
     output_dir = Path(output_dir) if isinstance(output_dir, str) else output_dir
+    if WEB_USE:
+        samples = list()
+        snippets = list()
     for i, splitted_frog in enumerate(splitted_frogs):
         splitted_frog_dir = output_dir / str(i)
         splitted_frog_dir.mkdir(parents=True, exist_ok=True)
-        for i, occurence in enumerate(splitted_frog):
+        for i, (occurence, start_ms, duration_ms) in enumerate(splitted_frog):
+            snippet_path = splitted_frog_dir / f"{i}.wav",
             sf.write(splitted_frog_dir / f"{i}.wav", occurence, SAMPLE_RATE, format="wav")
+            if WEB_USE:
+                snippets.append((snippet_path, start_ms, duration_ms))
+        if WEB_USE:
+            samples.append(generate_web_sample(i, snippets))
+    
+    if WEB_USE:
+        requests.post("htttp://web:8000/internal/progress/finish/", json={"result":create_web_return(samples, output_dir)})
 
     # for cluster, data in clustered.items():
     #     for occurence, splitted_data in enumerate(data):
@@ -243,6 +278,9 @@ def save_cluster_to_file(splitted_frogs: list, output_dir: Path | str, file_name
     #         sf.write(output_file, splitted_data, SAMPLE_RATE)
 
 def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None) -> None:
+    if WEB_USE and session_key is None:
+        raise ValueError("Session key have to be != None if WEB_USAGE.")
+
     AmphibDataset.sample_rate = SAMPLE_RATE
     basic_noise_path = FILES_DIR / "basic_noise.wav"
     basic_noise, _ = librosa.load(basic_noise_path, sr=SAMPLE_RATE)
@@ -275,10 +313,10 @@ def main(x_path: Optional[Path | str] = None, session_key: Optional[str] = None)
 
 
         if x_path:    
-            if session_key:
+            if WEB_USE:
                 post_content(session_key=session_key, 
-                                    name=f"Loading File with {SAMPLE_RATE}",
-                                    description="Loading File")
+                            name=f"Loading File with {SAMPLE_RATE}",
+                            description="Loading File")
 
             x, _ = librosa.load(x_path, sr=SAMPLE_RATE)
             x_path = Path(x_path) if isinstance(x_path, str) else x_path
